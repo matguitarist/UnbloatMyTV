@@ -21,7 +21,11 @@ if (args.Length >= 3 && args[1] == "--live")
     Console.WriteLine($"{dev.DisplayName}, Android {dev.AndroidVersion}, storage {dev.StorageFreeMb}/{dev.StorageTotalMb} MB, catalog v{Catalog.Version}");
     foreach (var g in Catalog.Build(dev))
         foreach (var t in g.Tweaks)
-            Console.WriteLine($"  [{(t.IsSelected ? "x" : " ")}] {g.Id,-12} {t.Id,-50} {t.Description[..Math.Min(70, t.Description.Length)]}");
+        {
+            var (done, option) = await t.ReadDoneAsync(adb, dev);
+            var mark = done ? "✓" : t.IsSelected ? "x" : " ";
+            Console.WriteLine($"  [{mark}] {g.Id,-12} {t.Id,-50} {(done && option is not null ? "set: " + option.Value : t.Description[..Math.Min(70, t.Description.Length)])}");
+        }
     if (dev.IsFireTv) Console.WriteLine($"{dev.FireOsVersion}; tracking on: [{string.Join(", ", await FirePrivacy.ReadOnAsync(adb, args[2]))}]");
     var unknown = Catalog.UnknownSystemApps(dev);
     Console.WriteLine($"unknown: {unknown.Count}: {string.Join(", ", unknown)}");

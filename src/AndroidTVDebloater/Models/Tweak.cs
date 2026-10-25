@@ -34,6 +34,8 @@ public abstract partial class Tweak : ObservableObject
 
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private TweakOption? _selectedOption;
+    /// <summary>The TV is already set this way: shown with a check mark and not ticked.</summary>
+    [ObservableProperty] private bool _isDone;
 
     public string Title => TitleText.ToString();
     public string Description => DescriptionText.ToString();
@@ -51,6 +53,13 @@ public abstract partial class Tweak : ObservableObject
     public virtual IEnumerable<string> SettingKeys => [];
 
     public abstract Task<TweakResult> ApplyAsync(ApplyContext ctx);
+
+    /// <summary>
+    /// Whether the TV is already set the way this choice would set it, and if so with which option.
+    /// Reading changes nothing. Choices that run something (clear caches…) are never done.
+    /// </summary>
+    public virtual Task<(bool Done, TweakOption? Option)> ReadDoneAsync(AdbService adb, TvDevice dev) =>
+        Task.FromResult<(bool, TweakOption?)>((false, null));
 
     public void RefreshTexts()
     {
@@ -97,8 +106,23 @@ public sealed class SettingsTweak : Tweak
 {
     public required IReadOnlyList<SettingWrite> Writes { get; init; }
 
+    /// <summary>False for a plain choice between options, such as the screensaver.</summary>
+    public bool CanBeDone { get; init; } = true;
+
     public override string Technical => string.Join(" · ", Writes.Select(w => w.Key).Distinct());
     public override IEnumerable<string> SettingKeys => Writes.Select(w => w.Key);
+
+    /// <summary>Done when every setting already has the value of one same option (any option counts).</summary>
+    public override async Task<(bool Done, TweakOption? Option)> ReadDoneAsync(AdbService adb, TvDevice dev)
+    {
+        if (!CanBeDone) return (false, null);
+        var current = new Dictionary<SettingWrite, string?>();
+        foreach (var w in Writes) current[w] = await SettingsIO.GetAsync(adb, dev.Serial, w.Namespace, w.Key);
+        bool Matches(string option) => Writes.All(w => current[w] == w.Value.Replace("{option}", option));
+        if (Options is not { Count: > 0 }) return (Matches(""), null);
+        var match = Options.FirstOrDefault(o => Matches(o.Value));
+        return (match is not null, match);
+    }
 
     public override async Task<TweakResult> ApplyAsync(ApplyContext ctx)
     {
@@ -136,6 +160,16 @@ public sealed class BackgroundLimitTweak : Tweak
             : await SettingsIO.ChangeAsync(ctx, "global", "activity_manager_constants", $"max_cached_processes={value}");
         return new TweakResult(ok);
     }
+
+    public override async Task<(bool Done, TweakOption? Option)> ReadDoneAsync(AdbService adb, TvDevice dev)
+    {
+        var v = dev.Sdk >= 29
+            ? await SettingsIO.GetAsync(adb, dev.Serial, "device_config:activity_manager", "max_cached_processes")
+            : (await SettingsIO.GetAsync(adb, dev.Serial, "global", "activity_manager_constants"))?
+                .Split(',').FirstOrDefault(p => p.StartsWith("max_cached_processes="))?["max_cached_processes=".Length..];
+        var match = Options?.FirstOrDefault(o => o.Value == v);
+        return (match is not null, match);
+    }
 }
 
 /// <summary>Turn the Wi-Fi radio off. Only offered when the TV is on Ethernet.</summary>
@@ -152,6 +186,9 @@ public sealed class WifiOffTweak : Tweak
         await ctx.Adb.ShellAsync(ctx.Serial, "svc wifi disable");
         return new TweakResult(true);
     }
+
+    public override async Task<(bool Done, TweakOption? Option)> ReadDoneAsync(AdbService adb, TvDevice dev) =>
+        (await SettingsIO.GetAsync(adb, dev.Serial, "global", "wifi_on") == "0", null);
 }
 
 /// <summary>
@@ -186,6 +223,15 @@ public sealed class PrivateDnsTweak : Tweak
         ctx.Backup.Settings.RemoveAll(s => s.Key is "private_dns_mode" or "private_dns_specifier");
         ctx.Backup.Save();
         return new TweakResult(false, Loc.Get("Apply_DnsReverted"));
+    }
+
+    /// <summary>Done when Private DNS already points at one of the offered filtering services.</summary>
+    public override async Task<(bool Done, TweakOption? Option)> ReadDoneAsync(AdbService adb, TvDevice dev)
+    {
+        if (await SettingsIO.GetAsync(adb, dev.Serial, "global", "private_dns_mode") != "hostname") return (false, null);
+        var host = await SettingsIO.GetAsync(adb, dev.Serial, "global", "private_dns_specifier");
+        var match = Options?.FirstOrDefault(o => o.Value == host);
+        return (match is not null, match);
     }
 }
 

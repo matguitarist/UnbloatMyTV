@@ -48,6 +48,7 @@ public sealed partial class ChooseViewModel : PageViewModel
         LastChoices = ChoiceSet.LoadLast();
         foreach (var t in AllTweaks) t.PropertyChanged += OnTweakChanged;
         _ = CheckReturnedAsync();
+        _ = CheckDoneAsync();
         if (device.IsFireTv) _ = CheckFirePrivacyAsync();
     }
 
@@ -64,6 +65,23 @@ public sealed partial class ChooseViewModel : PageViewModel
             }
         }
         catch { /* only a suggestion */ }
+    }
+
+    /// <summary>Settings the TV already has are shown as done and unticked. Reading changes nothing.</summary>
+    private async Task CheckDoneAsync()
+    {
+        foreach (var t in AllTweaks.Where(t => t is not PackageTweak).ToList())
+        {
+            try
+            {
+                var (done, option) = await t.ReadDoneAsync(Main.Adb, Device);
+                if (!done) continue;
+                if (option is not null) t.SelectedOption = option;
+                t.IsSelected = false;
+                t.IsDone = true;
+            }
+            catch { /* only a hint */ }
+        }
     }
 
     private IEnumerable<(Tweak Tweak, SettingChange? Setting)> MatchingTweaks(ReturnedItems r)
@@ -157,7 +175,7 @@ public sealed partial class ChooseViewModel : PageViewModel
     [RelayCommand]
     private void SelectRecommended()
     {
-        foreach (var t in AllTweaks) t.IsSelected = t.Recommended;
+        foreach (var t in AllTweaks) t.IsSelected = t.Recommended && !t.IsDone;
         ChoicesStatus = "";
     }
 

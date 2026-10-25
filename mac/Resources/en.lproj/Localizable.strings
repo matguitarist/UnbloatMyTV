@@ -81,6 +81,7 @@
 "Choose_Android" = "Android %1$@";
 "Choose_Apply" = "Apply %1$@ changes";
 "Choose_ChangeTv" = "Change TV";
+"Choose_DonePill" = "✓ Already set";
 "Choose_GroupCount" = "%1$@ of %2$@";
 "Choose_LastNo" = "No thanks";
 "Choose_LastText" = "%1$@ choices made on %2$@ (%3$@). Anything this TV doesn't have is skipped.";
@@ -151,7 +152,10 @@
 "Fire_Text" = "Fire OS protects some of Amazon's apps, so only the Amazon parts known to switch off safely are listed below. You can also turn off Amazon's tracking in the TV's own menu.";
 "Fire_Title" = "Fire TV: some of Amazon's apps stay on";
 "Health_Cpu" = "PROCESSOR";
-"Health_CpuText" = "Load %1$@ on %2$@ cores. On for %3$@.";
+"Health_CpuBusy" = "Busy";
+"Health_CpuOverloaded" = "Overloaded";
+"Health_CpuQuiet" = "Quiet";
+"Health_CpuText" = "%1$@: on average %2$@ tasks want the processor, which has %3$@ cores. On for %4$@.";
 "Health_Days" = "%1$@ days";
 "Health_GoChoose" = "Back to the list";
 "Health_Hours" = "%1$@ hours";

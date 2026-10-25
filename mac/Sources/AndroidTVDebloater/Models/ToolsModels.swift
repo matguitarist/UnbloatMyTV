@@ -39,7 +39,10 @@ final class HealthModel {
         let h = r.uptimeHours
         let up = h < 0.5 ? L("Health_UnderHour") : h < 1.5 ? L("Health_OneHour")
             : h < 48 ? L("Health_Hours", Int(h.rounded())) : L("Health_Days", Int((h / 24).rounded()))
-        return L("Health_CpuText", ChooseModel.oneDecimal(r.load), r.cores, up)
+        // The load average is how many tasks want the processor at once, not a percentage.
+        let perCore = r.cores > 0 ? r.load / Double(r.cores) : 0
+        let level = perCore <= 0.7 ? "Health_CpuQuiet" : perCore <= 1.0 ? "Health_CpuBusy" : "Health_CpuOverloaded"
+        return L("Health_CpuText", L(level), ChooseModel.oneDecimal(r.load), r.cores, up)
     }
 
     var tips: [HealthTip] {

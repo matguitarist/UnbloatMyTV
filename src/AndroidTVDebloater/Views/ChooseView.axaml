@@ -144,8 +144,11 @@
                               <StackPanel Spacing="3" Margin="4,0,0,0">
                                 <WrapPanel>
                                   <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,10,0" />
-                                  <Border Classes="pill" IsVisible="{Binding Recommended}">
+                                  <Border Classes="pill" IsVisible="{Binding Recommended}" Margin="0,0,6,0">
                                     <TextBlock Text="{l:T Choose_RecommendedPill}" />
+                                  </Border>
+                                  <Border Classes="pill" IsVisible="{Binding IsDone}">
+                                    <TextBlock Text="{l:T Choose_DonePill}" />
                                   </Border>
                                 </WrapPanel>
                                 <TextBlock Classes="muted" Text="{Binding Description}" />

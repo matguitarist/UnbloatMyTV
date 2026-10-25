@@ -197,6 +197,13 @@ struct TweakRow: View {
                                 .padding(.horizontal, 6).padding(.vertical, 1)
                                 .background(.green.opacity(0.15), in: Capsule())
                         }
+                        if tweak.isDone {
+                            Text(L("Choose_DonePill"))
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.green)
+                                .padding(.horizontal, 6).padding(.vertical, 1)
+                                .background(.green.opacity(0.15), in: Capsule())
+                        }
                     }
                     Text(tweak.description.text).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if let w = tweak.warning {

@@ -51,7 +51,15 @@ public sealed partial class HealthViewModel : PageViewModel
     public double StorageUsedPercent => Report is { StorageTotalMb: > 0 } r ? 100.0 * (r.StorageTotalMb - r.StorageFreeMb) / r.StorageTotalMb : 0;
     public string MemoryText => Report is null ? "" : Loc.Format("Health_MemoryText", Gb(Report.MemAvailableMb), Gb(Report.MemTotalMb));
     public string StorageText => Report is null ? "" : Loc.Format("Health_StorageText", Gb(Report.StorageFreeMb), Gb(Report.StorageTotalMb));
-    public string CpuText => Report is null ? "" : Loc.Format("Health_CpuText", Report.Load.ToString("0.#", Loc.Culture), Report.Cores, Uptime(Report.UptimeHours));
+    /// <summary>
+    /// The load average is how many tasks want the processor at once, not a percentage: compared with
+    /// the number of cores, above one per core means tasks are waiting.
+    /// </summary>
+    public string CpuText => Report is not { } r ? "" : Loc.Format("Health_CpuText",
+        Loc.Get(CpuLevel(r.Load, r.Cores)), r.Load.ToString("0.#", Loc.Culture), r.Cores, Uptime(r.UptimeHours));
+
+    public static string CpuLevel(double load, int cores) =>
+        cores <= 0 || load / cores <= 0.7 ? "Health_CpuQuiet" : load / cores <= 1.0 ? "Health_CpuBusy" : "Health_CpuOverloaded";
 
     private static string Uptime(double hours) => hours switch
     {

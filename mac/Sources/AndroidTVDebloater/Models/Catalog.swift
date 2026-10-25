@@ -201,6 +201,7 @@ enum Catalog {
                           description: description, warning: def.warning, options: options, kind: .settings(writes))
             t.selectedOption = recommended ? options[0].value
                 : (options.first { $0.value == dev.screensaverComponent } ?? options[0]).value
+            t.canBeDone = false
             return t
         case "optimizeApps": kind = .optimizeApps
         case "backgroundLimit": kind = .backgroundLimit

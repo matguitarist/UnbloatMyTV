@@ -52,6 +52,10 @@ final class Tweak: Identifiable {
 
     var isSelected = false
     var selectedOption: String?
+    /// The TV is already set this way: shown with a check mark and not ticked.
+    var isDone = false
+    /// False for a plain choice between options, such as the screensaver.
+    var canBeDone = true
 
     init(id: String, groupId: String, recommended: Bool, title: LocText, description: LocText,
          warning: LocText? = nil, options: [TweakOption] = [], kind: Kind) {
@@ -98,6 +102,42 @@ final class Tweak: Identifiable {
         case .wifiOff: return "svc wifi disable"
         case .trimCaches: return "pm trim-caches"
         case .optimizeApps: return "cmd package bg-dexopt-job"
+        }
+    }
+
+    /// Whether the TV is already set the way this choice would set it, and if so with which option.
+    /// Reading changes nothing. Choices that run something (clear caches…) are never done.
+    func readDone(_ adb: Adb, _ dev: TvDevice) async -> (done: Bool, option: String?) {
+        let values = options.map(\.value)
+        switch kind {
+        case .settings(let writes) where canBeDone:
+            // Every setting already has the value of one same option (any option counts).
+            var current: [String: String?] = [:]
+            for w in writes { current[w.namespace + "/" + w.key] = await SettingsIO.get(adb, dev.serial, w.namespace, w.key) }
+            func matches(_ option: String) -> Bool {
+                writes.allSatisfy { current[$0.namespace + "/" + $0.key] == .some($0.value.replacingOccurrences(of: "{option}", with: option)) }
+            }
+            if values.isEmpty { return (matches(""), nil) }
+            let match = values.first(where: matches)
+            return (match != nil, match)
+        case .backgroundLimit:
+            let v = dev.sdk >= 29
+                ? await SettingsIO.get(adb, dev.serial, "device_config:activity_manager", "max_cached_processes")
+                : (await SettingsIO.get(adb, dev.serial, "global", "activity_manager_constants"))?
+                    .split(separator: ",").first { $0.hasPrefix("max_cached_processes=") }
+                    .map { String($0.dropFirst("max_cached_processes=".count)) }
+            let match = values.first { $0 == v }
+            return (match != nil, match)
+        case .wifiOff:
+            return (await SettingsIO.get(adb, dev.serial, "global", "wifi_on") == "0", nil)
+        case .privateDns:
+            // Done when Private DNS already points at one of the offered filtering services.
+            guard await SettingsIO.get(adb, dev.serial, "global", "private_dns_mode") == "hostname" else { return (false, nil) }
+            let host = await SettingsIO.get(adb, dev.serial, "global", "private_dns_specifier")
+            let match = values.first { $0 == host }
+            return (match != nil, match)
+        default:
+            return (false, nil)
         }
     }
 

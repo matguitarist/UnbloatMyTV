@@ -12,7 +12,7 @@
     <ApplicationIcon Condition="Exists('Assets\app.ico')">Assets\app.ico</ApplicationIcon>
     <!-- Localised text is bound by key at runtime, so bindings stay reflection-based. -->
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
-    <Version>1.7.0</Version>
+    <Version>1.7.1</Version>
     <Product>UnbloatMyTV</Product>
     <Description>Disable bloatware, ads and tracking on Android TV and Google TV, with a one-click restore.</Description>
     <Copyright>MIT License</Copyright>

@@ -340,7 +340,19 @@ final class ChooseModel {
         unknownApps = Catalog.unknownSystemApps(device)
         lastChoices = ChoiceSet.loadLast()
         Task { await checkReturned() }
+        Task { await checkDone() }
         if device.isFireTv { Task { await checkFirePrivacy() } }
+    }
+
+    /// Settings the TV already has are shown as done and unticked. Reading changes nothing.
+    private func checkDone() async {
+        for t in allTweaks where !t.isPackage {
+            let (done, option) = await t.readDone(Adb.shared, device)
+            guard done else { continue }
+            if let option { t.selectedOption = option }
+            t.isSelected = false
+            t.isDone = true
+        }
     }
 
     func checkFirePrivacy() async {
@@ -430,7 +442,7 @@ final class ChooseModel {
     }
 
     func selectRecommended() {
-        for t in allTweaks { t.isSelected = t.recommended }
+        for t in allTweaks { t.isSelected = t.recommended && !t.isDone }
         choicesStatus = ""
     }
 

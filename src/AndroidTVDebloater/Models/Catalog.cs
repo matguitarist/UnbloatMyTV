@@ -303,6 +303,7 @@ public static class Catalog
                 DescriptionText = description, WarningText = warning, Options = options,
                 SelectedOption = recommended ? options[0]
                     : options.FirstOrDefault(o => o.Value == dev.ScreensaverComponent) ?? options[0],
+                CanBeDone = false,
                 Writes = def.Writes.Select(w => new SettingWrite(w.Namespace, w.Key, w.Value)).ToList(),
             },
             "optimizeApps" => new OptimizeAppsTweak

@@ -81,6 +81,7 @@
 "Choose_Android" = "Android %1$@";
 "Choose_Apply" = "Appliquer %1$@ changements";
 "Choose_ChangeTv" = "Changer de téléviseur";
+"Choose_DonePill" = "✓ Déjà réglé";
 "Choose_GroupCount" = "%1$@ sur %2$@";
 "Choose_LastNo" = "Non merci";
 "Choose_LastText" = "%1$@ choix faits sur %2$@ (%3$@). Ce que ce téléviseur n'a pas est ignoré.";
@@ -151,7 +152,10 @@
 "Fire_Text" = "Fire OS protège certaines applications d'Amazon : seules les parties Amazon qu'on peut désactiver sans risque sont listées ci-dessous. Vous pouvez aussi désactiver le pistage d'Amazon dans le menu du téléviseur.";
 "Fire_Title" = "Fire TV : certaines applications d'Amazon restent actives";
 "Health_Cpu" = "PROCESSEUR";
-"Health_CpuText" = "Charge %1$@ sur %2$@ cœurs. Allumé depuis %3$@.";
+"Health_CpuBusy" = "Occupé";
+"Health_CpuOverloaded" = "Surchargé";
+"Health_CpuQuiet" = "Calme";
+"Health_CpuText" = "%1$@ : en moyenne %2$@ tâches demandent le processeur, qui a %3$@ cœurs. Allumé depuis %4$@.";
 "Health_Days" = "%1$@ jours";
 "Health_GoChoose" = "Retour à la liste";
 "Health_Hours" = "%1$@ heures";
