@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Installing its own updates, downloaded from GitHub (Android asks the person to confirm). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Carrying on while the phone is locked: the clean-up runs in a service with a notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- It can run on a TV too, with a remote. -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -35,5 +40,6 @@
             </intent-filter>
         </activity>
         <receiver android:name=".update.InstallReceiver" android:exported="false" />
+        <service android:name=".WorkService" android:exported="false" android:foregroundServiceType="connectedDevice" />
     </application>
 </manifest>

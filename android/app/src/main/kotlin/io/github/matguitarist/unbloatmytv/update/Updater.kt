@@ -48,17 +48,7 @@ object Updater {
 
     /** The latest release if it is newer than this copy, otherwise null. Throws when GitHub can't be reached. */
     suspend fun check(): Info? = withContext(Dispatchers.IO) {
-        val c = URL("https://api.github.com/repos/$REPO/releases/latest").openConnection() as HttpURLConnection
-        c.connectTimeout = 15_000
-        c.readTimeout = 20_000
-        c.setRequestProperty("Accept", "application/vnd.github+json")
-        c.setRequestProperty("User-Agent", "UnbloatMyTV-Android/$current")
-        val root = try {
-            if (c.responseCode != 200) throw IOException("HTTP ${c.responseCode}")
-            Json.parseToJsonElement(c.inputStream.bufferedReader().readText()).jsonObject
-        } finally {
-            c.disconnect()
-        }
+        val root = release("latest")
         val version = root.str("tag_name").trimStart('v', 'V')
         if (!isNewer(version, current)) return@withContext null
         val asset = root["assets"]?.jsonArray?.map { it.jsonObject }?.firstOrNull { it.str("name") == ASSET } ?: return@withContext null
@@ -72,6 +62,25 @@ object Updater {
             sha256 = digest.removePrefix("sha256:").lowercase(),
             page = root.str("html_url").ifEmpty { "https://github.com/$REPO/releases/latest" },
         )
+    }
+
+    /** The notes of this version's release, in the phone's language, for "What's new" after an update. */
+    suspend fun notesFor(version: String): String = withContext(Dispatchers.IO) {
+        cleanNotes(release("tags/v$version").str("body"))
+    }
+
+    private fun release(which: String): JsonObject {
+        val c = URL("https://api.github.com/repos/$REPO/releases/$which").openConnection() as HttpURLConnection
+        c.connectTimeout = 15_000
+        c.readTimeout = 20_000
+        c.setRequestProperty("Accept", "application/vnd.github+json")
+        c.setRequestProperty("User-Agent", "UnbloatMyTV-Android/$current")
+        try {
+            if (c.responseCode != 200) throw IOException("HTTP ${c.responseCode}")
+            return Json.parseToJsonElement(c.inputStream.bufferedReader().readText()).jsonObject
+        } finally {
+            c.disconnect()
+        }
     }
 
     /** Downloads the update into the app's cache. Throws if it doesn't match the published checksum. */

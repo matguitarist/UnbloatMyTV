@@ -1,8 +1,13 @@
 package io.github.matguitarist.unbloatmytv
 
 import android.os.Bundle
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -62,6 +67,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -104,6 +110,15 @@ private fun App(vm: AppViewModel = viewModel()) {
     val screen = vm.screen
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // The clean-up carries on with the phone locked, with a notification showing how far it is:
+    // Android 13 and newer ask before an app may show one.
+    val ctx = LocalContext.current
+    val askNotify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    LaunchedEffect(screen) {
+        if (screen == Screen.Apply && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) askNotify.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
     // Back closes the menu, then goes one page back, never past a running job.
     BackHandler(enabled = drawer.isOpen) { scope.launch { drawer.close() } }
     BackHandler(enabled = !drawer.isOpen && screen != Screen.Welcome) {
@@ -296,6 +311,15 @@ private fun appVersion(): String {
 private fun UpdateDialogs(vm: AppViewModel) {
     val ctx = LocalContext.current
     val close = { vm.updateDialog = AppViewModel.UpdateDialog.None }
+    vm.whatsNew?.let { (version, notes) ->
+        val close = { vm.whatsNew = null }
+        AlertDialog(
+            onDismissRequest = close,
+            title = { Text(stringResource(R.string.Android_WhatsNew, version)) },
+            text = { Text(notes, Modifier.verticalScroll(rememberScrollState()), style = MaterialTheme.typography.bodySmall) },
+            confirmButton = { TextButton(onClick = close) { Text(stringResource(R.string.Update_Ok)) } },
+        )
+    }
     when (vm.updateDialog) {
         AppViewModel.UpdateDialog.None -> Unit
         AppViewModel.UpdateDialog.UpToDate -> AlertDialog(

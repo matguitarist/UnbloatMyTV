@@ -361,7 +361,7 @@
     <string name="Android_Scanning">Searching… %1$s%%</string>
     <string name="Android_ApproveWait">Waiting for the TV…</string>
     <string name="Android_NoWifi">This phone isn\'t on Wi-Fi. Connect it to the same network as the TV, then search again.</string>
-    <string name="Android_KeepOpen">Keep this app open until it is done.</string>
+    <string name="Android_KeepOpen">You can lock the phone or use other apps meanwhile: it carries on. Keep the phone on the same Wi-Fi.</string>
     <string name="Android_Restore">Undo</string>
     <string name="Android_Disconnect">Change TV</string>
     <string name="Android_Groups">%1$s of %2$s ticked</string>
@@ -382,4 +382,18 @@
     <string name="Android_UpdateInstall">Install the update</string>
     <string name="Android_UpdateAllow">Android needs your permission first: allow UnbloatMyTV to install apps, come back, and tap Install the update again.</string>
     <string name="Android_UpdateInstalling">Android is installing the update…</string>
+    <string name="Android_WhatsNew">What\'s new in %1$s</string>
+    <string name="Android_WorkChannel">Work on the TV</string>
+    <string name="Android_WorkText">Working…</string>
+    <string name="Android_WorkApply">Cleaning up %1$s</string>
+    <string name="Android_WorkOther">Working on %1$s</string>
+    <string name="Android_BackupSave">Save a copy</string>
+    <string name="Android_BackupOpen">Open a backup file</string>
+    <string name="Android_BackupsText">Backups are kept inside this app, and uninstalling it deletes them. Save a copy elsewhere (Drive, a computer…) to be able to undo later anyway.</string>
+    <string name="Android_BackupSaved">Copy saved.</string>
+    <string name="Android_BackupSaveFailed">The copy couldn\'t be saved there.</string>
+    <string name="Android_BackupAdded">Backup from %1$s added: it can be undone below.</string>
+    <string name="Android_BackupBad">This file isn\'t an UnbloatMyTV backup, or it has no changes in it.</string>
+    <string name="Android_BackupOtherTv">This backup belongs to another TV (%1$s). Connect that TV to undo it.</string>
+    <string name="Android_AppsOtherProfiles">%1$s apps are installed in other profiles on this device (a work profile or another person); they aren\'t listed here.</string>
 </resources>

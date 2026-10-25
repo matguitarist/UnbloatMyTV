@@ -262,8 +262,15 @@ object UserApps {
         return names.withIndex().associate { (i, n) -> n to Triple(at(app, i), at(data, i), at(cache, i)) }
     }
 
-    private suspend fun list(tv: Tv, flag: String): Set<String> =
-        tv.shell("pm list packages --user 0 $flag").output.lines().map { it.trim() }
+    /** Apps installed in the TV's other profiles (a work profile, another person), which the list leaves out. */
+    suspend fun inOtherProfiles(tv: Tv): Int {
+        val users = Regex("UserInfo\\{(\\d+):").findAll(tv.shell("pm list users").output)
+            .map { it.groupValues[1] }.filter { it != "0" }.toList()
+        return users.flatMap { list(tv, "-3", it) }.toSet().size
+    }
+
+    private suspend fun list(tv: Tv, flag: String, user: String = "0"): Set<String> =
+        tv.shell("pm list packages --user $user $flag").output.lines().map { it.trim() }
             .filter { it.startsWith("package:") }.map { it.removePrefix("package:") }.toSet()
 
     private fun field(block: String, name: String): String {

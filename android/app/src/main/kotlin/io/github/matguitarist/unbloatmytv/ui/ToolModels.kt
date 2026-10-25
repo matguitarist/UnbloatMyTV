@@ -363,6 +363,8 @@ class AppsModel(private val vm: AppViewModel) {
     var sort by mutableStateOf(Sort.Name)
     /** The list shows only the apps that didn't come from a store. */
     var onlyOutside by mutableStateOf(false)
+    /** With nothing in the main profile: how many apps the other profiles have, which aren't listed. */
+    var otherProfiles by mutableStateOf(0); private set
     /** One backup per visit, started on the first app turned off or on. */
     private var backup: Backup? = null
 
@@ -395,6 +397,7 @@ class AppsModel(private val vm: AppViewModel) {
             val apps = runCatching { UserApps.read(tv, dev) }.getOrDefault(emptyList())
             val list = apps.map { AppRow(it, isNeeded(dev, it)) }
             rows = list
+            otherProfiles = if (list.isEmpty()) runCatching { UserApps.inOtherProfiles(tv) }.getOrDefault(0) else 0
             loading = false
             // Pictures and names from the TV, after the list shows: they take a few seconds the first time.
             if (list.isEmpty()) return@launch

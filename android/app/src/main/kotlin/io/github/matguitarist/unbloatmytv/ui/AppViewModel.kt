@@ -7,9 +7,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.matguitarist.unbloatmytv.R
+import io.github.matguitarist.unbloatmytv.WorkService
 import io.github.matguitarist.unbloatmytv.model.ApplyContext
 import io.github.matguitarist.unbloatmytv.model.Backup
 import io.github.matguitarist.unbloatmytv.model.Catalog
@@ -30,11 +32,12 @@ import io.github.matguitarist.unbloatmytv.tv.Tv
 import io.github.matguitarist.unbloatmytv.tv.WirelessNotPaired
 import io.github.matguitarist.unbloatmytv.update.Updater
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class Screen {
     Welcome, Connect, Choose, Apply, Restore,
@@ -77,8 +80,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Something is running that must not be left halfway: the menu waits. */
     val isBusy: Boolean
-        get() = applyJob?.isActive == true || restoreBusy || connecting != null ||
+        get() = applying || restoreBusy || connecting != null ||
             infoModel?.restarting == true || installModel?.installing == true
+
+    /**
+     * What is changing the TV right now, for the notification that keeps the work going when the
+     * phone locks; null when nothing is. Connecting isn't in it: that waits for someone at the TV.
+     */
+    private fun workTitle(): String? {
+        val name = device?.displayName.orEmpty()
+        return when {
+            applying -> str(R.string.Android_WorkApply, name)
+            restoreBusy || infoModel?.restarting == true || installModel?.installing == true -> str(R.string.Android_WorkOther, name)
+            else -> null
+        }
+    }
 
     // ---------- Tools ----------
 
@@ -415,13 +431,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var debugStatus by mutableStateOf("")
         private set
-    private var applyJob: Job? = null
+    var applying by mutableStateOf(false)
+        private set
 
     fun apply() {
         val t = tv ?: return
         val dev = device ?: return
         val selected = allTweaks.filter { it.isSelected }
-        if (selected.isEmpty() || applyJob?.isActive == true) return
+        if (selected.isEmpty() || applying) return
         steps.clear()
         applyFinished = false
         problemCount = 0
@@ -432,7 +449,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         progress = 0f
         appliedWithReboot = rebootAfter
         go(Screen.Apply)
-        applyJob = viewModelScope.launch { runApply(t, dev, selected, rebootAfter) }
+        applying = true
+        viewModelScope.launch {
+            try { runApply(t, dev, selected, rebootAfter) } finally { applying = false }
+        }
     }
 
     private suspend fun runApply(t: Tv, dev: TvDevice, selected: List<Tweak>, reboot: Boolean) {
@@ -536,7 +556,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun backToChoices() {
-        if (applyJob?.isActive == true) return
+        if (applying) return
         openChoose()
     }
 
@@ -593,6 +613,32 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         str(R.string.Restore_Done)
     }
 
+    /** A copy of a backup somewhere the person picked (Drive, Downloads…), safe from uninstalling the app. */
+    fun exportBackup(b: Backup, uri: android.net.Uri) {
+        restoreError = runCatching {
+            getApplication<Application>().contentResolver.openOutputStream(uri, "wt")!!.use { it.write(b.file.readBytes()) }
+        }.isFailure
+        restoreStatus = str(if (restoreError) R.string.Android_BackupSaveFailed else R.string.Android_BackupSaved)
+    }
+
+    fun importBackup(uri: android.net.Uri) {
+        val dev = device ?: return
+        viewModelScope.launch {
+            try {
+                val text = withContext(Dispatchers.IO) {
+                    getApplication<Application>().contentResolver.openInputStream(uri)!!.use { it.readBytes().toString(Charsets.UTF_8) }
+                }
+                val b = Backup.adopt(dev, text)
+                reloadBackups()
+                restoreError = false
+                restoreStatus = str(R.string.Android_BackupAdded, b.createdText)
+            } catch (e: Exception) {
+                restoreError = true
+                restoreStatus = if (e is IllegalArgumentException) e.message.orEmpty() else str(R.string.Android_BackupBad)
+            }
+        }
+    }
+
     /** Safety net: re-enable every app disabled by a user (not the ones the maker turned off). */
     fun enableAll() = runRestore {
         val t = tv!!
@@ -643,7 +689,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var autoCheckVersion by mutableIntStateOf(0)
         private set
 
+    /** Version and notes shown once after the app updated itself. */
+    var whatsNew by mutableStateOf<Pair<String, String>?>(null)
+
     init {
+        // The first start of a new version shows what changed. 1.8.0 didn't note its version yet:
+        // a phone that had used the app before came from it.
+        val now = Updater.current
+        val before = prefs.getString("lastVersion", null) ?: if (prefs.getBoolean("welcomed", false)) "1.8.0" else null
+        prefs.edit().putString("lastVersion", now).apply()
+        if (before != null && Updater.isNewer(now, before)) viewModelScope.launch {
+            val notes = runCatching { Updater.notesFor(now) }.getOrNull()
+            if (!notes.isNullOrBlank()) whatsNew = now to notes
+        }
         // Quiet check at start-up: only speaks up when there is something new and not skipped.
         if (autoCheckUpdates) viewModelScope.launch {
             delay(1_500)
@@ -698,7 +756,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // Last, once every property above exists: these read them straight away.
+    init {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            snapshotFlow { workTitle() }.collect { t -> if (t != null) WorkService.start(ctx, t) else WorkService.stop(ctx) }
+        }
+        viewModelScope.launch {
+            snapshotFlow { if (applying) steps.firstOrNull { it.state == StepState.Running }?.text.orEmpty() to progress else null }
+                .collect { it?.let { (step, p) -> WorkService.update(ctx, step, p) } }
+        }
+    }
+
     override fun onCleared() {
+        WorkService.stop(getApplication())
         tv?.close()
     }
 }

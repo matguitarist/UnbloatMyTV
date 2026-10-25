@@ -89,6 +89,7 @@ fun AppsScreen(m: AppsModel) {
 
         if (!m.loading && m.rows.isEmpty()) {
             Banner(stringResource(R.string.Apps_None), PillKind.Ok)
+            if (m.otherProfiles > 0) Muted(stringResource(R.string.Android_AppsOtherProfiles, m.otherProfiles))
             return@PageColumn
         }
         if (m.rows.isEmpty()) return@PageColumn

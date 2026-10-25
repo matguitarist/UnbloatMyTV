@@ -361,7 +361,7 @@
     <string name="Android_Scanning">Recherche… %1$s %%</string>
     <string name="Android_ApproveWait">En attente du téléviseur…</string>
     <string name="Android_NoWifi">Ce téléphone n\'est pas en Wi-Fi. Connectez-le au même réseau que le téléviseur, puis relancez la recherche.</string>
-    <string name="Android_KeepOpen">Gardez l\'application ouverte jusqu\'à la fin.</string>
+    <string name="Android_KeepOpen">Vous pouvez verrouiller le téléphone ou utiliser d\'autres applications pendant ce temps : le travail continue. Gardez le téléphone sur le même Wi-Fi.</string>
     <string name="Android_Restore">Annuler</string>
     <string name="Android_Disconnect">Changer de téléviseur</string>
     <string name="Android_Groups">%1$s sur %2$s cochés</string>
@@ -382,4 +382,18 @@
     <string name="Android_UpdateInstall">Installer la mise à jour</string>
     <string name="Android_UpdateAllow">Android demande d\'abord votre accord : autorisez UnbloatMyTV à installer des applications, revenez et appuyez de nouveau sur Installer la mise à jour.</string>
     <string name="Android_UpdateInstalling">Android installe la mise à jour…</string>
+    <string name="Android_WhatsNew">Nouveautés de la version %1$s</string>
+    <string name="Android_WorkChannel">Travail sur le téléviseur</string>
+    <string name="Android_WorkText">En cours…</string>
+    <string name="Android_WorkApply">Nettoyage de %1$s</string>
+    <string name="Android_WorkOther">Travail sur %1$s</string>
+    <string name="Android_BackupSave">Enregistrer une copie</string>
+    <string name="Android_BackupOpen">Ouvrir un fichier de sauvegarde</string>
+    <string name="Android_BackupsText">Les sauvegardes sont gardées dans l\'application, et la désinstaller les supprime. Enregistrez une copie ailleurs (Drive, un ordinateur…) pour pouvoir annuler plus tard malgré tout.</string>
+    <string name="Android_BackupSaved">Copie enregistrée.</string>
+    <string name="Android_BackupSaveFailed">La copie n\'a pas pu être enregistrée à cet endroit.</string>
+    <string name="Android_BackupAdded">Sauvegarde du %1$s ajoutée : elle peut être annulée ci-dessous.</string>
+    <string name="Android_BackupBad">Ce fichier n\'est pas une sauvegarde UnbloatMyTV, ou il ne contient aucun changement.</string>
+    <string name="Android_BackupOtherTv">Cette sauvegarde appartient à un autre téléviseur (%1$s). Connectez ce téléviseur pour l\'annuler.</string>
+    <string name="Android_AppsOtherProfiles">%1$s applications sont installées dans d\'autres profils de cet appareil (profil professionnel ou autre personne) ; elles ne sont pas listées ici.</string>
 </resources>

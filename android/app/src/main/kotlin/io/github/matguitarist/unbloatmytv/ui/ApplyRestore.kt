@@ -1,5 +1,7 @@
 package io.github.matguitarist.unbloatmytv.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -22,6 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.matguitarist.unbloatmytv.R
+import io.github.matguitarist.unbloatmytv.model.Backup
 
 @Composable
 fun ApplyScreen(vm: AppViewModel) {
@@ -133,6 +144,13 @@ private fun StepRow(s: StepItem) {
 
 @Composable
 fun RestoreScreen(vm: AppViewModel) {
+    var saving by remember { mutableStateOf<Backup?>(null) }
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val b = saving
+        if (uri != null && b != null) vm.exportBackup(b, uri)
+        saving = null
+    }
+    val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::importBackup) }
     PageColumn {
         Text(stringResource(R.string.Restore_Title), style = MaterialTheme.typography.headlineMedium)
         Muted(stringResource(R.string.Restore_Lead))
@@ -153,8 +171,16 @@ fun RestoreScreen(vm: AppViewModel) {
                             else stringResource(R.string.Restore_SummaryAccess, b.disabledPackages.size, changed, b.revokedPermissions.size)
                         )
                     }
+                    IconButton(onClick = { saving = b; save.launch(exportName(b)) }) {
+                        Icon(Icons.Outlined.SaveAlt, stringResource(R.string.Android_BackupSave), tint = AppTheme.colors.muted)
+                    }
                     OutlinedButton(onClick = { vm.restore(b) }, enabled = !vm.restoreBusy) { Text(stringResource(R.string.Android_Restore)) }
                 }
+            }
+            // Backups live inside the app: uninstalling it deletes them.
+            if (vm.backups.isNotEmpty()) Muted(stringResource(R.string.Android_BackupsText))
+            TextButton(onClick = { open.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, enabled = !vm.restoreBusy) {
+                Text(stringResource(R.string.Android_BackupOpen))
             }
         }
         AppCard {
@@ -166,4 +192,10 @@ fun RestoreScreen(vm: AppViewModel) {
         Spacer(Modifier.height(4.dp))
         TextButton(onClick = vm::backToChoices, enabled = !vm.restoreBusy) { Text(stringResource(R.string.Common_Back)) }
     }
+}
+
+/** "UnbloatMyTV-Living_room_TV-20261025-151719.json": says what it is once it is out of the app. */
+private fun exportName(b: Backup): String {
+    val tv = b.deviceName.map { if (it.isLetterOrDigit() || it == '-') it else '_' }.joinToString("")
+    return "UnbloatMyTV-$tv-" + b.file.name.removePrefix("changes-")
 }

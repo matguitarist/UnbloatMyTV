@@ -1,6 +1,8 @@
 package io.github.matguitarist.unbloatmytv.model
 
+import io.github.matguitarist.unbloatmytv.R
 import io.github.matguitarist.unbloatmytv.UnbloatApp
+import io.github.matguitarist.unbloatmytv.str
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -67,6 +69,21 @@ class Backup(
         fun start(dev: TvDevice): Backup {
             val b = Backup(deviceName = dev.displayName, serialNo = dev.serialNo, androidVersion = dev.androidVersion)
             b.file = File(folderFor(dev), "changes-${b.createdAt.format(stamp)}.json")
+            return b
+        }
+
+        /**
+         * A backup file saved elsewhere (from this app or a computer's), put back with this TV's backups.
+         * Throws with a message for the person when it isn't a backup or belongs to another TV.
+         */
+        fun adopt(dev: TvDevice, text: String): Backup {
+            val b = runCatching { json.decodeFromString(serializer(), text) }.getOrNull()
+            if (b == null || b.changeCount == 0) throw IllegalArgumentException(str(R.string.Android_BackupBad))
+            val sameTv = if (b.serialNo.isNotBlank() && dev.serialNo.isNotBlank()) b.serialNo == dev.serialNo
+                else b.deviceName == dev.displayName
+            if (!sameTv) throw IllegalArgumentException(str(R.string.Android_BackupOtherTv, b.deviceName.ifBlank { "?" }))
+            b.file = File(folderFor(dev), "changes-${b.createdAt.format(stamp)}.json")
+            b.save()
             return b
         }
 
