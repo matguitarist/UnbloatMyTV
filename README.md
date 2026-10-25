@@ -4,13 +4,13 @@
 
 <p align="center">
   Turn off the ads, tracking and preinstalled apps on any Android TV, Google TV or Fire TV.<br>
-  For Windows, macOS and Linux. Plain-language choices, a backup of everything, one-click undo.
+  For Windows, macOS, Linux and Android phones. Plain-language choices, a backup of everything, one-click undo.
 </p>
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/matguitarist/UnbloatMyTV?label=download"></a>
   <img alt="Android TV, Google TV, Fire TV" src="https://img.shields.io/badge/Android%20TV%20%C2%B7%20Google%20TV%20%C2%B7%20Fire%20TV-green">
-  <img alt="Windows, macOS, Linux" src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-blue">
+  <img alt="Windows, macOS, Linux, Android" src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20Android-blue">
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/github/license/matguitarist/UnbloatMyTV"></a>
   <br><sub>Formerly “Android TV Debloater”.</sub>
   <br><a href="README.fr.md">Version française</a>
@@ -20,8 +20,8 @@
 
 ## Download
 
-Get the file for your computer from the **[latest release](../../releases/latest)**. Nothing else to
-install: the first time, the app downloads Google's official ADB tools (about 7 MB, from
+Get the file for your computer or phone from the **[latest release](../../releases/latest)**. Nothing else to
+install: the first time, the computer apps download Google's official ADB tools (about 7 MB, from
 `dl.google.com`) into its own folder.
 
 | | File | First launch |
@@ -29,8 +29,10 @@ install: the first time, the app downloads Google's official ADB tools (about 7 
 | **Windows** 10/11 | `UnbloatMyTV.exe` | SmartScreen may say the publisher is unknown (the exe isn't code-signed yet): **More info → Run anyway**. |
 | **macOS** 14+ | `UnbloatMyTV-mac.zip` | Native Mac app for Apple silicon and Intel, signed and notarized by Apple. Unzip, move it to Applications, open it, and allow it to find devices on the local network. |
 | **Linux** x64 | `UnbloatMyTV-x86_64.AppImage` | Most distributions (Ubuntu 22.04 and newer, Fedora, Debian, Arch…). Make it executable (`chmod +x`, or Properties → Allow executing) and open it. |
+| **Android** 8+ | `UnbloatMyTV-android.apk` | For a phone or tablet on the same Wi-Fi as the TV; it speaks ADB itself, nothing else to download. Open the file on the phone and allow installing from your browser or file manager. The clean-up and every tool are there, with network debugging or Wireless debugging (pairing code). |
 
-Every version updates itself: it shows what's new and installs the update in a few seconds.
+Every app updates itself: it shows what's new and installs the update in a few seconds (on Android,
+after you confirm). Choices and backups are kept.
 
 ## What it does
 
@@ -148,16 +150,22 @@ linux/build-appimage.sh                                                   # AppI
 then `mac/build-app.sh`. Its text comes from the Windows app's `Strings.cs`: after changing it, run
 `python3 tools/gen-mac-strings.py`.
 
+**Android app** (`android/`, Kotlin and Jetpack Compose, ADB over the network with
+[dadb](https://github.com/mobile-dev-inc/dadb), Wireless debugging with
+[libadb-android](https://github.com/MuntashirAkon/libadb-android)): JDK 17+ and the Android SDK, then
+`cd android && ./gradlew assembleDebug`. Its text also comes from `Strings.cs`: run
+`python3 tools/gen-android-strings.py`.
+
 **Screenshots**: `dotnet run --project tools/Screenshots -- docs` renders every page with a made-up TV.
 
-**The list of apps** is [`shared/catalog.json`](shared/catalog.json), used by both apps. Each entry
+**The list of apps** is [`shared/catalog.json`](shared/catalog.json), used by every app. Each entry
 has a package `id` (or a `prefix`), a `group`, `recommended`, and `name` / `description` (plus an
 optional `warning`) in English and French; settings and the `keep` list live there too. Only mark
 something `recommended` if switching it off changes nothing a viewer would notice, test it on a
 real device, and **increase `version`**: every installed copy picks up the new list from `main`.
 
 **Releases**: bump `<Version>` in the csproj and push an annotated tag such as `v1.3.0`. GitHub
-Actions builds all three, signs and notarizes the Mac app, and publishes the release; the tag
+Actions builds them all, signs and notarizes the Mac app, signs the Android app, and publishes the release; the tag
 message becomes the notes shown in the update window.
 
 ## Credits

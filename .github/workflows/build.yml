@@ -116,6 +116,42 @@ jobs:
             mac/build/appcast.xml
           if-no-files-found: ignore
 
+  # Phone and tablet app (Android 8 and newer), signed with the project's own key on version tags.
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Signing key
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          # A release must never go out with a throwaway key: phones couldn't update it later.
+          test -n "$ANDROID_KEYSTORE_B64"
+          echo "$ANDROID_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "ANDROID_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Build the APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk ../UnbloatMyTV-android.apk
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: UnbloatMyTV-android.apk
+          if-no-files-found: error
+
   # The in-place update (rename the running exe, move the new one in) only works on Windows.
   update-swap-test:
     runs-on: windows-latest
@@ -134,10 +170,10 @@ jobs:
         if: always()
         run: Stop-Process -Name UpdateSwapTest -ErrorAction SilentlyContinue
 
-  # One release with all three builds, once they are all ready.
+  # One release with every build, once they are all ready.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, linux, mac]
+    needs: [windows, linux, mac, android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -166,6 +202,7 @@ jobs:
             dist/UnbloatMyTV-x86_64.AppImage
             dist/UnbloatMyTV-x86_64.AppImage.zsync
             dist/UnbloatMyTV-mac.zip
+            dist/UnbloatMyTV-android.apk
             dist/AndroidTVDebloater.exe
             dist/AndroidTVDebloater-linux-x64
             dist/AndroidTVDebloater-x86_64.AppImage

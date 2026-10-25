@@ -4,13 +4,13 @@
 
 <p align="center">
   Désactivez les publicités, le pistage et les applications préinstallées de n'importe quel Android TV, Google TV ou Fire TV.<br>
-  Pour Windows, macOS et Linux. Des choix expliqués simplement, une sauvegarde de tout, une annulation en un clic.
+  Pour Windows, macOS, Linux et les téléphones Android. Des choix expliqués simplement, une sauvegarde de tout, une annulation en un clic.
 </p>
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Dernière version" src="https://img.shields.io/github/v/release/matguitarist/UnbloatMyTV?label=t%C3%A9l%C3%A9charger"></a>
   <img alt="Android TV, Google TV, Fire TV" src="https://img.shields.io/badge/Android%20TV%20%C2%B7%20Google%20TV%20%C2%B7%20Fire%20TV-green">
-  <img alt="Windows, macOS, Linux" src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-blue">
+  <img alt="Windows, macOS, Linux, Android" src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20Android-blue">
   <a href="LICENSE"><img alt="Licence MIT" src="https://img.shields.io/github/license/matguitarist/UnbloatMyTV"></a>
   <br><sub>Anciennement « Android TV Debloater ».</sub>
   <br><a href="README.md">English version</a>
@@ -20,8 +20,8 @@
 
 ## Télécharger
 
-Prenez le fichier de votre ordinateur dans la **[dernière version](../../releases/latest)**. Rien
-d'autre à installer : la première fois, l'application télécharge les outils ADB officiels de Google
+Prenez le fichier de votre ordinateur ou de votre téléphone dans la **[dernière version](../../releases/latest)**. Rien
+d'autre à installer : la première fois, les applications pour ordinateur téléchargent les outils ADB officiels de Google
 (environ 7 Mo, depuis `dl.google.com`) dans son propre dossier.
 
 | | Fichier | Premier lancement |
@@ -29,9 +29,11 @@ d'autre à installer : la première fois, l'application télécharge les outils 
 | **Windows** 10/11 | `UnbloatMyTV.exe` | SmartScreen peut indiquer un éditeur inconnu (l'exe n'est pas encore signé) : **Informations complémentaires → Exécuter quand même**. |
 | **macOS** 14+ | `UnbloatMyTV-mac.zip` | Application Mac native pour Apple silicon et Intel, signée et notariée par Apple. Décompressez, placez-la dans Applications, ouvrez-la et autorisez-la à trouver des appareils sur le réseau local. |
 | **Linux** x64 | `UnbloatMyTV-x86_64.AppImage` | La plupart des distributions (Ubuntu 22.04 et plus récent, Fedora, Debian, Arch…). Rendez-le exécutable (`chmod +x`, ou Propriétés → Autoriser l'exécution) et ouvrez-le. |
+| **Android** 8+ | `UnbloatMyTV-android.apk` | Pour un téléphone ou une tablette sur le même Wi-Fi que le téléviseur ; il parle ADB lui-même, rien d'autre à télécharger. Ouvrez le fichier sur le téléphone et autorisez l'installation depuis votre navigateur ou gestionnaire de fichiers. Le nettoyage et tous les outils y sont, avec le débogage réseau ou le débogage sans fil (code d'association). |
 
-Chaque version se met à jour toute seule : elle affiche les nouveautés et installe la mise à jour en
-quelques secondes.
+Toutes les applications se mettent à jour toutes seules : elles affichent les nouveautés et
+installent la mise à jour en quelques secondes (sur Android, après votre confirmation). Choix et
+sauvegardes sont conservés.
 
 ## Ce que fait l'application
 
@@ -152,8 +154,8 @@ contacte seulement :
 
 ## Pour les développeurs
 
-Voir la [version anglaise](README.md#for-developers) : compilation des applications Windows, Linux et
-Mac, liste des applications (`shared/catalog.json`) et publication des versions.
+Voir la [version anglaise](README.md#for-developers) : compilation des applications Windows, Linux,
+Mac et Android, liste des applications (`shared/catalog.json`) et publication des versions.
 
 ## Crédits
 

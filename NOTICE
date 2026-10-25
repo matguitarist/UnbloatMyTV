@@ -26,9 +26,19 @@ SOFTWARE.
 
 ---
 
-The Outfit typeface in launcher/app/src/main/res/font/outfit.ttf is copyright
-The Outfit Project Authors and licensed under the SIL Open Font License 1.1,
-see launcher/FONT-LICENSE-OFL.txt.
+The Android app includes dadb (https://github.com/mobile-dev-inc/dadb, copyright
+mobile.dev inc.) and Okio (https://github.com/square/okio, copyright Square, Inc.), and the
+AndroidX, Jetpack Compose and Kotlin libraries, all under the Apache License 2.0
+(https://www.apache.org/licenses/LICENSE-2.0).
 
-ADB (Android platform-tools) is not included. It is downloaded at runtime from
+For Wireless debugging it includes libadb-android and spake2-java
+(https://github.com/MuntashirAkon/libadb-android, https://github.com/MuntashirAkon/spake2-java,
+copyright Muntashir Al-Islam), libadb-android used under the Apache License 2.0 (one of its two
+licences); Conscrypt (https://github.com/google/conscrypt, copyright The Android Open Source
+Project), under the Apache License 2.0; parts of BoringSSL, inside Conscrypt and spake2-java, under
+the ISC and OpenSSL licences (https://boringssl.googlesource.com/boringssl/+/HEAD/LICENSE); and
+Bouncy Castle (https://www.bouncycastle.org, copyright The Legion of the Bouncy Castle Inc.) under
+the MIT licence (https://www.bouncycastle.org/licence.html).
+
+ADB (Android platform-tools) is not included in the desktop apps. It is downloaded at runtime from
 Google (dl.google.com) under the Android SDK licence.
