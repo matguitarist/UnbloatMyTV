@@ -62,6 +62,14 @@ quelques secondes.
 - **Désactive le débogage pour vous** à la fin, puis **Recommencer** pour le téléviseur suivant.
 
 **Outils**
+- **Infos du téléviseur** : version d'Android, âge du correctif de sécurité, système verrouillé et
+  vérifié ou non, avec des raccourcis vers Mise à jour du système et À propos, et un redémarrage
+  qui attend le téléviseur.
+- **Bilan de confidentialité** : quelles applications peuvent utiliser le micro, la caméra, la
+  position, les contacts et l'agenda, et un clic pour retirer un accès. Restaurer le redonne.
+- **Mes applications** : les applications que vous avez installées, avec leur image, leur taille et
+  leur provenance. Ouvrez-les, arrêtez-les, désactivez-les ou désinstallez-les, et repérez celles qui
+  ne viennent pas d'une boutique.
 - **Bilan de santé** : mémoire, stockage, processeur, applications qui utilisent le plus de mémoire
   et applications qui plantent en boucle, avec des conseils simples. Lecture seule.
 - **Écran et télécommande** : voyez l'écran du téléviseur en direct et pilotez-le depuis
@@ -80,6 +88,7 @@ clair et sombre selon votre système.
 | ![Terminé](docs/apply-dark-fr.png) | ![Bilan de santé, en anglais](docs/health-dark-en.png) |
 | ![Écran et télécommande, en anglais](docs/remote-dark-en.png) | ![L'application Mac, en anglais](docs/mac-welcome-en.png) |
 | ![Fire TV, en anglais](docs/choose-firetv-dark-en.png) | ![Choisir](docs/choose-dark-fr.png) |
+| ![Infos du téléviseur, en anglais](docs/info-dark-en.png) | ![Mes applications, en anglais](docs/apps-dark-en.png) |
 
 ## Avant de commencer, sur le téléviseur
 
@@ -104,8 +113,10 @@ Tout ce qui fonctionne sous **Android TV** ou **Google TV** : téléviseurs (Son
 Philips, Hisense…), boîtiers et clés (Chromecast avec Google TV, NVIDIA Shield, Mi Box…) et les
 décodeurs Android TV loués par de nombreux opérateurs.
 
-**Fire TV** (testé sur une Fire TV Stick 4K Max, Fire OS 7.6) : se connecte de la même façon. Fire OS refuse de désactiver les applications d'Amazon :
-l'application ne les propose donc pas. Elle indique quelles options de pistage d'Amazon sont encore
+**Fire TV** (testé sur une Fire TV Stick 4K Max, Fire OS 7.6) : se connecte de la même façon. Fire OS refuse de désactiver certaines
+applications d'Amazon : l'application ne propose donc que les parties Amazon qu'on peut désactiver
+proprement (statistiques, reconnaissance de contenu, rangées sponsorisées, tutoriels…) et masque
+les autres. Elle indique quelles options de pistage d'Amazon sont encore
 actives et ouvre le menu du téléviseur pour les désactiver ; les réglages de vitesse et le DNS
 fonctionnent comme d'habitude. Un autre écran d'accueil ne peut pas remplacer complètement
 celui d'Amazon : testé avec Projectivy, il ne prend la main sur le bouton Accueil qu'après le délai

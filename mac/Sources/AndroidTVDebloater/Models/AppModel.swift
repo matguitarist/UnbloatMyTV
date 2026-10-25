@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import Observation
 
-enum Page { case welcome, connect, choose, apply, restore, health, install, remote }
+enum Page { case welcome, connect, choose, apply, restore, info, health, privacy, apps, install, remote }
 
 /// The whole app's state: which page is showing, the connected TV, and each page's model.
 @MainActor @Observable
@@ -16,7 +16,10 @@ final class AppModel {
     var choose: ChooseModel?
     var apply: ApplyModel?
     var restore: RestoreModel?
+    var info: TvInfoModel?
     var health: HealthModel?
+    var privacy: PrivacyModel?
+    var apps: AppsModel?
     var install: InstallModel?
     var remote: RemoteModel?
 
@@ -30,7 +33,7 @@ final class AppModel {
         switch page {
         case .welcome: 0
         case .connect: 1
-        case .choose, .restore, .health, .install, .remote: 2
+        case .choose, .restore, .info, .health, .privacy, .apps, .install, .remote: 2
         case .apply: apply?.isFinished == true ? 4 : 3
         }
     }
@@ -38,11 +41,12 @@ final class AppModel {
     /// Changes are being made to the TV: don't let the user leave the page.
     var isBusy: Bool {
         (page == .apply && apply?.isFinished == false) || (page == .restore && restore?.isBusy == true)
+            || (page == .info && info?.isRestarting == true)
     }
 
     func canNavigate(toStep n: Int) -> Bool {
         // From a tool page (step 3 too), "Choose" leads back to the list.
-        let onTool = [.restore, .health, .install, .remote].contains(page)
+        let onTool = [.restore, .info, .health, .privacy, .apps, .install, .remote].contains(page)
         return (n < stepIndex || (n == 2 && onTool)) && !isBusy && n < 3 && (n != 2 || device != nil)
     }
 
@@ -85,6 +89,24 @@ final class AppModel {
         guard let dev = device, !isBusy else { return }
         restore = RestoreModel(app: self, device: dev)
         page = .restore
+    }
+
+    func goInfo() {
+        guard let dev = device, !isBusy else { return }
+        info = TvInfoModel(app: self, device: dev)
+        page = .info
+    }
+
+    func goPrivacy() {
+        guard let dev = device, !isBusy else { return }
+        privacy = PrivacyModel(device: dev)
+        page = .privacy
+    }
+
+    func goApps() {
+        guard let dev = device, !isBusy else { return }
+        apps = AppsModel(app: self, device: dev)
+        page = .apps
     }
 
     func goHealth() {
@@ -249,9 +271,12 @@ final class ConnectModel {
         RecentTvs.remember(address: target, name: dev.displayName)
         app.device = dev
         await app.goChoose()
-        // Development aid, with ATVD_CONNECT: ATVD_PAGE=health|remote|install|restore opens a tool page (read-only).
+        // Development aid, with ATVD_CONNECT: ATVD_PAGE=info|health|privacy|apps|remote|install|restore opens a tool page (read-only).
         switch ProcessInfo.processInfo.environment["ATVD_PAGE"] {
+        case "info": app.goInfo()
         case "health": app.goHealth()
+        case "privacy": app.goPrivacy()
+        case "apps": app.goApps()
         case "remote": app.goRemote()
         case "install": app.goInstall()
         case "restore": app.goRestore()
@@ -666,16 +691,18 @@ final class RestoreModel {
     }
 
     func summary(_ b: Backup) -> String {
-        L("Restore_Summary", b.disabledPackages.count, b.settings.count + (b.wifiWasOn == true ? 1 : 0))
+        L(b.revokedPermissions.isEmpty ? "Restore_Summary" : "Restore_SummaryAccess",
+          b.disabledPackages.count, b.settings.count + (b.wifiWasOn == true ? 1 : 0), b.revokedPermissions.count)
     }
 
-    /// Undo one run: re-enable its apps and put every setting back as it was.
+    /// Undo one run: re-enable its apps, put every setting back as it was, and give back removed accesses.
     func restore(_ b: Backup) async {
         await runBusy { adb, serial in
             for pkg in b.disabledPackages { _ = await adb.shell(serial, "pm enable \(pkg)") }
             for s in b.settings.reversed() { await SettingsIO.restore(adb, serial, s.namespace, s.key, s.oldValue) }
             if b.wifiWasOn == true { _ = await adb.shell(serial, "svc wifi enable") }
             for pkg in b.enabledPackages { _ = await adb.shell(serial, "pm disable-user --user 0 \(pkg)") }
+            for p in b.revokedPermissions { _ = await adb.shell(serial, "pm grant --user 0 \(p.package) \(p.permission)") }
             // Keep the file for reference, but stop offering it.
             let renamed = b.fileURL.deletingLastPathComponent()
                 .appendingPathComponent(b.fileURL.lastPathComponent.replacingOccurrences(of: "changes-", with: "restored-"))

@@ -55,6 +55,12 @@ Every version updates itself: it shows what's new and installs the update in a f
 - **Turns debugging off for you** when you are done, then **Start over** for the next TV.
 
 **Tools**
+- **TV info**: Android version, how old the security patch is, whether the system is locked and
+  verified, with shortcuts to System update and About, and a restart that waits for the TV.
+- **Privacy check-up**: which apps can use the microphone, camera, location, contacts and
+  calendar, and one click to remove an access. Restore gives it back.
+- **My apps**: the apps you installed, with their picture, size and where they came from. Open,
+  stop, turn off or uninstall them, and spot apps that didn't come from a store.
 - **Health check**: memory, storage, processor, the apps using the most memory, and apps stuck in a
   crash loop, with plain advice. Read-only.
 - **Screen and remote**: see the TV screen live and control it from the computer, including typing
@@ -71,6 +77,8 @@ reset brings everything back too. English and French; light and dark themes foll
 | ![Prepare](docs/welcome-dark-en.png) | ![Connect](docs/connect-dark-en.png) |
 | ![Some changes were undone](docs/choose-returned-dark-en.png) | ![Done](docs/apply-dark-en.png) |
 | ![Health check](docs/health-dark-en.png) | ![Screen and remote](docs/remote-dark-en.png) |
+| ![TV info](docs/info-dark-en.png) | ![Privacy check-up](docs/privacy-dark-en.png) |
+| ![My apps](docs/apps-dark-en.png) | ![Restore](docs/restore-dark-en.png) |
 | ![Choisir, in French](docs/choose-dark-fr.png) | ![The Mac app](docs/mac-welcome-en.png) |
 | ![Fire TV](docs/choose-firetv-dark-en.png) | ![Install an app](docs/install-dark-en.png) |
 
@@ -95,8 +103,9 @@ streaming boxes and sticks (Chromecast with Google TV, NVIDIA Shield, Mi Box…)
 set-top boxes that many TV operators rent out.
 
 **Fire TV** (tested on a Fire TV Stick 4K Max, Fire OS 7.6) connects the same way. Fire OS refuses
-to switch off Amazon's own apps, so the app doesn't offer them. It shows which of Amazon's tracking
-switches are still on and opens the TV's menu to turn them off, and the speed and DNS settings work
+to switch off some of Amazon's own apps, so the app only offers the Amazon parts known to switch off
+cleanly (metrics, content recognition, sponsored rows, tutorials…) and hides the rest. It shows which
+of Amazon's tracking switches are still on and opens the TV's menu to turn them off, and the speed and DNS settings work
 as usual. Another home screen can't fully replace Amazon's: tested with Projectivy, it takes over the
 Home button only after Android's 5-second delay, so Amazon's home screen still shows first.
 

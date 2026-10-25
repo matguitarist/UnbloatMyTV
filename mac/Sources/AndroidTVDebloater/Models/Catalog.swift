@@ -106,6 +106,9 @@ enum Catalog {
 
     @MainActor static func isKeep(_ pkg: String) -> Bool { isKeep(current, pkg) }
 
+    /// Whether the catalog lists this exact app as one that can be turned off.
+    @MainActor static func isListed(_ pkg: String) -> Bool { current.packages.contains { $0.id == pkg } }
+
     /// The catalog's name for an app, in the current language, if it has one.
     /// A readable name for an app or process ("com.google.android.gms:snet" counts as its app).
     @MainActor static func name(of pkg: String) -> String? {

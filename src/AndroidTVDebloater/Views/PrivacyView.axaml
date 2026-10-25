@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:AndroidTVDebloater.Localization"
+             xmlns:vm="using:AndroidTVDebloater.ViewModels"
+             x:Class="AndroidTVDebloater.Views.PrivacyView">
+  <ScrollViewer>
+    <StackPanel Margin="44,38,44,40" MaxWidth="860" HorizontalAlignment="Left" Spacing="22">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T Health_Refresh}"
+                Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" />
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h1" Text="{l:T Privacy_Title}" />
+          <TextBlock Classes="lead" Text="{l:T Privacy_Lead}" />
+        </StackPanel>
+      </DockPanel>
+
+      <Border Classes="note">
+        <TextBlock Text="{l:T Privacy_Note}" TextWrapping="Wrap" />
+      </Border>
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" />
+      <Border Classes="err" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrFg}" TextWrapping="Wrap" />
+      </Border>
+      <Border Classes="err" IsVisible="{Binding StatusIsError}">
+        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource ErrFg}" TextWrapping="Wrap" />
+      </Border>
+      <Border Classes="ok" IsVisible="{Binding IsEmpty}">
+        <TextBlock Text="{l:T Privacy_None}" Foreground="{DynamicResource OkFg}" TextWrapping="Wrap" />
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><StackPanel Spacing="22" /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:AccessGroup">
+            <StackPanel Spacing="10">
+              <StackPanel Spacing="3">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Right" Classes="faint" Text="{Binding CountText}" VerticalAlignment="Bottom" />
+                  <TextBlock Classes="h2" Text="{Binding Title}" />
+                </DockPanel>
+                <TextBlock Classes="muted" Text="{Binding Text}" TextWrapping="Wrap" />
+              </StackPanel>
+              <Border Classes="card" Padding="0">
+                <ItemsControl Classes="rows" ItemsSource="{Binding Rows}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:AccessRow">
+                      <Border Classes="row" Padding="18,10">
+                        <DockPanel>
+                          <Panel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0">
+                            <Button Content="{l:T Privacy_Remove}" IsVisible="{Binding !IsRemoved}" IsEnabled="{Binding CanRemove}"
+                                    Command="{Binding $parent[UserControl].DataContext.RemoveCommand}"
+                                    CommandParameter="{Binding}" />
+                            <TextBlock Text="{l:T Privacy_Removed}" Foreground="{DynamicResource OkFg}" FontWeight="SemiBold"
+                                       IsVisible="{Binding IsRemoved}" VerticalAlignment="Center" />
+                          </Panel>
+                          <TextBlock DockPanel.Dock="Right" Classes="faint" Text="{Binding Origin}" VerticalAlignment="Center" />
+                          <StackPanel Spacing="1">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Classes="faint mono" Text="{Binding Package}" IsVisible="{Binding HasFriendlyName}" />
+                          </StackPanel>
+                        </DockPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Border>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

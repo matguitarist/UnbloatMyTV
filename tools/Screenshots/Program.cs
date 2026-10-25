@@ -33,6 +33,15 @@ if (args.Length >= 3 && args[1] == "--live")
     foreach (var c in h.Crashing) Console.WriteLine($"  crashing: {c.Package} x{c.Restarts} keep={Catalog.IsKeep(c.Package)}");
     var back = await ReturnCheck.FindAsync(adb, dev);
     Console.WriteLine(back is null ? "returned: nothing" : $"returned since {back.Since}: apps [{string.Join(", ", back.Packages)}] settings [{string.Join(", ", back.Settings.Select(x => x.Key + "=" + x.NewValue))}]");
+    var info = await TvInfo.ReadAsync(adb, args[2]);
+    Console.WriteLine($"info: Android {info.AndroidVersion}, build {info.BuildId}, patch {info.SecurityPatch}, locked {info.BootloaderLocked}, boot {info.VerifiedBoot}");
+    var apps = await UserApps.ReadAsync(adb, dev);
+    var pictures = await TvIcons.ReadAsync(adb, args[2], apps);
+    foreach (var a in apps)
+        Console.WriteLine($"  app {a.Package,-40} {AppRow.Origin(a),-28} {a.TotalBytes / 1048576,5} MB on={a.IsEnabled} icon={a.HasIcon} " +
+                          $"name={pictures.GetValueOrDefault(a.Package)?.Label} png={pictures.GetValueOrDefault(a.Package)?.Png?.Length ?? 0}");
+    foreach (var a in await Privacy.ReadAsync(adb, dev))
+        Console.WriteLine($"  access {a.Kind.Key,-10} {a.Package} [{string.Join(", ", a.Granted)}]");
     var shot = await adb.RunBinaryAsync(["-s", args[2], "exec-out", "screencap", "-p"]);
     Console.WriteLine($"screenshot: {shot?.Length ?? 0} bytes");
     return;
@@ -192,7 +201,73 @@ Shot("choose-returned-dark-en", ThemeVariant.Dark, "en", m =>
     return c;
 });
 
-// A made-up Fire TV: Amazon's apps are hidden, its tracking switches are shown instead.
+Shot("info-dark-en", ThemeVariant.Dark, "en", m => new TvInfoViewModel(m, tv, read: false)
+{
+    Info = new TvInfo
+    {
+        AndroidVersion = "11", BuildId = "RTT4.250710.001",
+        SecurityPatch = DateOnly.FromDateTime(DateTime.Today.AddMonths(-7).AddDays(1 - DateTime.Today.Day)),
+        BootloaderLocked = true, VerifiedBoot = "green",
+    },
+}, 1150);
+Shot("privacy-dark-en", ThemeVariant.Dark, "en", m =>
+{
+    var p = new PrivacyViewModel(m, tv, read: false);
+    AccessKind Kind(string key) => Privacy.Kinds.First(k => k.Key == key);
+    AppAccess A(string pkg, string kind, bool yours) => new(pkg, Kind(kind), ["android.permission.X"], yours);
+    p.Show(
+    [
+        A("com.example.karaoke", "Microphone", true), A("com.example.videochat", "Microphone", true),
+        A("com.example.videochat", "Camera", true),
+        A("com.example.weather", "Location", true), A("org.example.speedtest", "Location", true),
+    ]);
+    return p;
+}, 1000);
+
+// My apps: made-up apps with drawn 16:9 tiles, so no real app or brand appears.
+byte[] Banner(string color, string text)
+{
+    var tile = new Avalonia.Controls.Border
+    {
+        Width = 160, Height = 90,
+        Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(color)),
+        Child = new Avalonia.Controls.TextBlock
+        {
+            Text = text, FontSize = 22, FontWeight = Avalonia.Media.FontWeight.Bold, Foreground = Avalonia.Media.Brushes.White,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        },
+    };
+    tile.Measure(new Size(160, 90));
+    tile.Arrange(new Rect(0, 0, 160, 90));
+    using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(160, 90));
+    bmp.Render(tile);
+    using var ms = new MemoryStream();
+    bmp.Save(ms);
+    return ms.ToArray();
+}
+var demoApps = new (string Pkg, string Label, string Color, string Installer, int Mb, int DaysAgo)[]
+{
+    ("com.example.cinema", "Cinema Club", "#E0533D", "com.android.vending", 186, 90),
+    ("com.example.karaoke", "Sing Along", "#8E5BD9", "com.android.vending", 92, 30),
+    ("com.example.radio", "World Radio", "#2DA36B", "com.android.vending", 41, 400),
+    ("com.example.sports", "Match Day", "#3B72F0", "com.android.vending", 230, 200),
+    ("com.example.videochat", "Family Call", "#1FA3C4", "com.android.vending", 120, 12),
+    ("com.example.weather", "Weather Now", "#E2A33A", "com.android.vending", 31, 600),
+    ("org.example.speedtest", "Speed Check", "#5B6B82", "", 18, 3),
+};
+Shot("apps-dark-en", ThemeVariant.Dark, "en", m =>
+{
+    var a = new AppsViewModel(m, tv, read: false);
+    var today = DateTime.Today;
+    a.Show(
+        demoApps.Select(d => new InstalledApp(d.Pkg, "2.4.1", d.Installer, today.AddDays(-d.DaysAgo), today.AddDays(-1),
+            d.Mb * 1024L * 1024, 6 * 1024L * 1024, 2 * 1024L * 1024, IsEnabled: d.Pkg != "com.example.radio", HasIcon: true, ByMaker: false)),
+        demoApps.ToDictionary(d => d.Pkg, d => new TvIcons.Entry(d.Label, Banner(d.Color, d.Label))));
+    return a;
+}, 1000);
+
+// A made-up Fire TV: only the Amazon parts the catalog lists are offered, with its tracking switches.
 var fire = new TvDevice
 {
     Serial = "192.168.1.43:5555", Manufacturer = "Amazon", Brand = "Amazon", Model = "AFTKA",
@@ -200,7 +275,8 @@ var fire = new TvDevice
     Network = NetworkKind.WiFi, HomePackage = "com.amazon.tv.launcher", SetupComplete = true,
     StorageTotalMb = 5087, StorageFreeMb = 2830,
     Enabled = ["com.amazon.tv.launcher", "com.amazon.device.logmanager", "com.amazon.tv.fw.metrics",
-               "com.android.printspooler", "com.netflix.ninja", "com.android.dreams.basic"],
+               "com.amazon.tv.acr", "com.amazon.kso.blackbird", "com.amazon.sneakpeek", "com.amazon.tmm.tutorial",
+               "com.amazon.bueller.photos", "com.android.printspooler", "com.netflix.ninja", "com.android.dreams.basic"],
     ThirdParty = ["com.netflix.ninja"],
 };
 Shot("choose-firetv-dark-en", ThemeVariant.Dark, "en", m =>

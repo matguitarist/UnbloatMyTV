@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:AndroidTVDebloater.Localization"
+             xmlns:vm="using:AndroidTVDebloater.ViewModels"
+             x:Class="AndroidTVDebloater.Views.TvInfoView">
+  <UserControl.Styles>
+    <Style Selector="ItemsControl.facts">
+      <Setter Property="ItemTemplate">
+        <DataTemplate DataType="vm:InfoRow">
+          <Grid ColumnDefinitions="200,*" Margin="0,3">
+            <TextBlock Classes="muted" Text="{Binding Label}" />
+            <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" TextWrapping="Wrap" />
+          </Grid>
+        </DataTemplate>
+      </Setter>
+    </Style>
+  </UserControl.Styles>
+  <ScrollViewer>
+    <StackPanel Margin="44,38,44,40" MaxWidth="860" HorizontalAlignment="Left" Spacing="22">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T Health_Refresh}"
+                Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" />
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h1" Text="{l:T Info_Title}" />
+          <TextBlock Classes="lead" Text="{l:T Info_Lead}" />
+        </StackPanel>
+      </DockPanel>
+
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" />
+      <Border Classes="err" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrFg}" TextWrapping="Wrap" />
+      </Border>
+      <Border Classes="ok" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              Classes.err="{Binding StatusIsError}">
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+      </Border>
+
+      <StackPanel Spacing="22" IsVisible="{Binding HasInfo}">
+        <ItemsControl ItemsSource="{Binding Tips}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:HealthTip">
+              <Panel>
+                <Border Classes="ok" IsVisible="{Binding IsOk}">
+                  <TextBlock Text="{Binding Text}" Foreground="{DynamicResource OkFg}" TextWrapping="Wrap" />
+                </Border>
+                <Border Classes="warn" IsVisible="{Binding IsWarn}">
+                  <TextBlock Text="{Binding Text}" Foreground="{DynamicResource WarnFg}" TextWrapping="Wrap" />
+                </Border>
+                <Border Classes="note" IsVisible="{Binding IsInfo}">
+                  <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                </Border>
+              </Panel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="h2" Text="{l:T Info_SoftwareTitle}" />
+            <ItemsControl Classes="facts" ItemsSource="{Binding Software}" />
+            <Button Content="{l:T Info_OpenUpdate}" Command="{Binding OpenUpdateCommand}" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="h2" Text="{l:T Info_BootTitle}" />
+            <ItemsControl Classes="facts" ItemsSource="{Binding Boot}" />
+            <TextBlock Classes="muted" Text="{l:T Info_BootText}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <TextBlock Classes="h2" Text="{l:T Info_RestartTitle}" />
+            <Border Classes="warn" IsVisible="{Binding IsConfirmingRestart}">
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <Button Content="{l:T Common_Cancel}" Command="{Binding CancelRestartCommand}" />
+                  <Button Classes="accent" Content="{l:T Info_ConfirmYes}" Command="{Binding RestartCommand}" />
+                </StackPanel>
+                <TextBlock Text="{l:T Info_ConfirmRestart}" Foreground="{DynamicResource WarnFg}" TextWrapping="Wrap"
+                           VerticalAlignment="Center" Margin="0,0,12,0" />
+              </DockPanel>
+            </Border>
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsRestarting}" />
+            <DockPanel>
+              <Button DockPanel.Dock="Right" VerticalAlignment="Center" Content="{l:T Info_Restart}"
+                      Command="{Binding AskRestartCommand}" IsEnabled="{Binding CanRestart}" />
+              <TextBlock Classes="muted" Text="{l:T Info_RestartText}" TextWrapping="Wrap" Margin="0,0,16,0"
+                         VerticalAlignment="Center" />
+            </DockPanel>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="h2" Text="{l:T Info_ResetTitle}" />
+            <TextBlock Classes="muted" Text="{l:T Info_ResetText}" TextWrapping="Wrap" />
+            <Button Content="{l:T Info_ResetOpen}" Command="{Binding OpenAboutCommand}" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

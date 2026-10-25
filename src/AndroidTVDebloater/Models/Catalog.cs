@@ -179,6 +179,9 @@ public static class Catalog
 
     public static bool IsKeep(string pkg) => _current.Keep.Any(k => k.Id == pkg);
 
+    /// <summary>Whether the catalog lists this exact app as one that can be turned off.</summary>
+    public static bool IsListed(string pkg) => _current.Packages.Any(p => p.Id == pkg);
+
     /// <summary>The catalog's name for an app, in the current language, if it has one.</summary>
     /// <summary>A readable name for an app or process ("com.google.android.gms:snet" counts as its app).</summary>
     public static string? NameOf(string pkg)

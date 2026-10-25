@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:AndroidTVDebloater.Localization"
+             xmlns:vm="using:AndroidTVDebloater.ViewModels"
+             x:Class="AndroidTVDebloater.Views.AppsView">
+  <ScrollViewer>
+    <StackPanel Margin="44,38,44,40" MaxWidth="860" HorizontalAlignment="Left" Spacing="22">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T Health_Refresh}"
+                Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" />
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h1" Text="{l:T Apps_Title}" />
+          <TextBlock Classes="lead" Text="{l:T Apps_Lead}" />
+        </StackPanel>
+      </DockPanel>
+
+      <Border Classes="note">
+        <TextBlock Text="{l:T Apps_Note}" TextWrapping="Wrap" />
+      </Border>
+      <!-- Apps that didn't come from a store, by name -->
+      <Border Classes="warn" IsVisible="{Binding HasOutside}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding OutsideText}" Foreground="{DynamicResource WarnFg}" TextWrapping="Wrap" />
+          <SelectableTextBlock Text="{Binding OutsideList}" TextWrapping="Wrap" />
+          <Button Classes="link" Content="{Binding OnlyOutsideText}" Command="{Binding ToggleOutsideCommand}" />
+        </StackPanel>
+      </Border>
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" />
+      <Border Classes="err" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrFg}" TextWrapping="Wrap" />
+      </Border>
+      <Border Classes="note" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              Classes.err="{Binding StatusIsError}">
+        <SelectableTextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+      </Border>
+      <Border Classes="ok" IsVisible="{Binding IsEmpty}">
+        <TextBlock Text="{l:T Apps_None}" Foreground="{DynamicResource OkFg}" TextWrapping="Wrap" />
+      </Border>
+
+      <StackPanel Spacing="10" IsVisible="{Binding !IsEmpty}">
+        <DockPanel>
+          <ComboBox DockPanel.Dock="Right" MinWidth="200" Margin="12,0,0,0"
+                    ItemsSource="{Binding SortOptions}" SelectedIndex="{Binding SortIndex}" />
+          <TextBox Watermark="{l:T Apps_Search}" Text="{Binding Search}" />
+        </DockPanel>
+        <TextBlock Classes="faint" Text="{Binding Summary}" />
+        <TextBlock Classes="muted" Text="{l:T Apps_NoMatch}" IsVisible="{Binding NoMatch}" />
+
+        <Border Classes="card" Padding="0" IsVisible="{Binding !NoMatch}">
+          <ItemsControl Classes="rows" ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:AppRow">
+                <Border Classes="row" Padding="18,10">
+                  <StackPanel Spacing="8">
+                    <DockPanel>
+                      <Panel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <Button Content="{l:T Apps_Actions}" IsVisible="{Binding IsPresent}" IsEnabled="{Binding !IsWorking}">
+                          <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                              <MenuItem Header="{l:T Apps_Open}" Command="{Binding OpenCommand}" IsEnabled="{Binding CanOpen}" />
+                              <MenuItem Header="{l:T Apps_ShowInfo}" Command="{Binding ShowInfoCommand}" />
+                              <MenuItem Header="{l:T Apps_Stop}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" />
+                              <Separator />
+                              <MenuItem Header="{l:T Apps_TurnOff}" Command="{Binding TurnOffCommand}"
+                                        IsVisible="{Binding App.IsEnabled}" IsEnabled="{Binding CanTurnOff}" />
+                              <MenuItem Header="{l:T Apps_TurnOn}" Command="{Binding TurnOnCommand}"
+                                        IsVisible="{Binding !App.IsEnabled}" IsEnabled="{Binding CanTurnOn}" />
+                              <MenuItem Header="{l:T Apps_UninstallMenu}" Command="{Binding AskUninstallCommand}" IsEnabled="{Binding CanRemove}" />
+                            </MenuFlyout>
+                          </Button.Flyout>
+                        </Button>
+                        <TextBlock Text="{Binding GoneText}" Foreground="{DynamicResource OkFg}" FontWeight="SemiBold"
+                                   IsVisible="{Binding IsGone}" VerticalAlignment="Center" />
+                      </Panel>
+                      <Border DockPanel.Dock="Right" Classes="pill count" Margin="12,0,0,0" IsVisible="{Binding IsOff}">
+                        <TextBlock Text="{l:T Apps_Off}" />
+                      </Border>
+                      <Border DockPanel.Dock="Right" Classes="pill warn" Margin="12,0,0,0" IsVisible="{Binding IsOutside}">
+                        <TextBlock Text="{l:T Apps_NotFromStore}" />
+                      </Border>
+                      <Border DockPanel.Dock="Right" Classes="pill info" Margin="12,0,0,0" IsVisible="{Binding IsProtected}">
+                        <TextBlock Text="{l:T Apps_Needed}" />
+                      </Border>
+                      <!-- 16:9, like the tiles on the TV's home screen -->
+                      <Panel DockPanel.Dock="Left" Width="64" Height="36" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Border CornerRadius="6" Background="{DynamicResource CardBorder}"
+                                IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                        <Border CornerRadius="6" ClipToBounds="True">
+                          <Image Source="{Binding Icon}" Stretch="Uniform" />
+                        </Border>
+                      </Panel>
+                      <StackPanel Spacing="1">
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="faint mono" Text="{Binding Package}" IsVisible="{Binding HasFriendlyName}" />
+                        <TextBlock Classes="faint" Text="{Binding Details}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </DockPanel>
+                    <Border Classes="warn" Padding="12,8" IsVisible="{Binding IsConfirming}">
+                      <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0" VerticalAlignment="Center">
+                          <Button Content="{l:T Common_Cancel}" Command="{Binding CancelCommand}" />
+                          <Button Classes="accent" Content="{l:T Apps_Uninstall}" Command="{Binding ConfirmCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding ConfirmText}" Foreground="{DynamicResource WarnFg}" TextWrapping="Wrap"
+                                   VerticalAlignment="Center" />
+                      </DockPanel>
+                    </Border>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

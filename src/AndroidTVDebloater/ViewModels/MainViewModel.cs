@@ -67,18 +67,21 @@ public sealed partial class MainViewModel : ObservableObject
     {
         oldValue?.OnLeave();
         RefreshSteps();
-        foreach (var name in new[] { nameof(OnHealth), nameof(OnRemote), nameof(OnInstall), nameof(OnRestore) })
+        foreach (var name in new[] { nameof(OnInfo), nameof(OnHealth), nameof(OnPrivacy), nameof(OnApps), nameof(OnRemote), nameof(OnInstall), nameof(OnRestore) })
             OnPropertyChanged(name);
     }
 
     // Which sidebar tool is open, to mark it.
+    public bool OnInfo => CurrentPage is TvInfoViewModel;
     public bool OnHealth => CurrentPage is HealthViewModel;
+    public bool OnPrivacy => CurrentPage is PrivacyViewModel;
+    public bool OnApps => CurrentPage is AppsViewModel;
     public bool OnRemote => CurrentPage is RemoteViewModel;
     public bool OnInstall => CurrentPage is InstallViewModel;
     public bool OnRestore => CurrentPage is RestoreViewModel;
 
     /// <summary>Changes are being made to the TV: don't let the user leave the page.</summary>
-    public bool IsBusy => CurrentPage is ApplyViewModel { IsFinished: false } or RestoreViewModel { IsBusy: true };
+    public bool IsBusy => CurrentPage is ApplyViewModel { IsFinished: false } or RestoreViewModel { IsBusy: true } or TvInfoViewModel { IsRestarting: true };
 
     public void RefreshSteps()
     {
@@ -87,7 +90,7 @@ public sealed partial class MainViewModel : ObservableObject
             s.IsActive = s.Number - 1 == CurrentPage.StepIndex;
             s.IsDone = s.Number - 1 < CurrentPage.StepIndex;
             // From a tool page (also step 3), "Choose" leads back to the list.
-            var onTool = CurrentPage is HealthViewModel or InstallViewModel or RemoteViewModel or RestoreViewModel;
+            var onTool = CurrentPage is TvInfoViewModel or HealthViewModel or PrivacyViewModel or AppsViewModel or InstallViewModel or RemoteViewModel or RestoreViewModel;
             s.CanNavigate = (s.IsDone || (s.Number == 3 && onTool)) && !IsBusy && s.Number < 4 && (s.Number != 3 || HasDevice);
         }
     }
@@ -142,9 +145,27 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(HasDevice))]
+    private void GoInfo()
+    {
+        if (Device is not null && !IsBusy) CurrentPage = new TvInfoViewModel(this, Device);
+    }
+
+    [RelayCommand(CanExecute = nameof(HasDevice))]
     private void GoHealth()
     {
         if (Device is not null && !IsBusy) CurrentPage = new HealthViewModel(this, Device);
+    }
+
+    [RelayCommand(CanExecute = nameof(HasDevice))]
+    private void GoPrivacy()
+    {
+        if (Device is not null && !IsBusy) CurrentPage = new PrivacyViewModel(this, Device);
+    }
+
+    [RelayCommand(CanExecute = nameof(HasDevice))]
+    private void GoApps()
+    {
+        if (Device is not null && !IsBusy) CurrentPage = new AppsViewModel(this, Device);
     }
 
     [RelayCommand(CanExecute = nameof(HasDevice))]
@@ -162,7 +183,10 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnDeviceChanged(TvDevice? value)
     {
         GoRestoreCommand.NotifyCanExecuteChanged();
+        GoInfoCommand.NotifyCanExecuteChanged();
         GoHealthCommand.NotifyCanExecuteChanged();
+        GoPrivacyCommand.NotifyCanExecuteChanged();
+        GoAppsCommand.NotifyCanExecuteChanged();
         GoInstallCommand.NotifyCanExecuteChanged();
         GoRemoteCommand.NotifyCanExecuteChanged();
         RefreshSteps();

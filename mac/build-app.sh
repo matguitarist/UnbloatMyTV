@@ -33,6 +33,7 @@ install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/Mac
 ditto "$BIN_DIR/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
 cp -R Resources/en.lproj Resources/fr.lproj Resources/AppIcon.icns "$APP/Contents/Resources/"
 cp ../shared/catalog.json "$APP/Contents/Resources/catalog.json"
+cp ../helper/umtv-helper.dex "$APP/Contents/Resources/umtv-helper.dex"
 sed "s/__VERSION__/$VERSION/g" Info.plist > "$APP/Contents/Info.plist"
 
 # Sign from the inside out (Sparkle's helpers, the framework, then the app).

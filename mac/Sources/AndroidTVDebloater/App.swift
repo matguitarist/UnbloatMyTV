@@ -49,7 +49,10 @@ struct ContentView: View {
                 case .choose: if let c = model.choose { ChooseView(choose: c) }
                 case .apply: if let a = model.apply { ApplyView(apply: a) }
                 case .restore: if let r = model.restore { RestoreView(restore: r) }
+                case .info: if let i = model.info { TvInfoView(info: i) }
                 case .health: if let h = model.health { HealthView(health: h) }
+                case .privacy: if let p = model.privacy { PrivacyView(privacy: p) }
+                case .apps: if let a = model.apps { AppsView(apps: a) }
                 case .install: if let i = model.install { InstallView(install: i) }
                 case .remote: if let r = model.remote { RemoteView(remote: r) }
                 }
@@ -116,10 +119,13 @@ struct Sidebar: View {
 
 extension Sidebar {
     private static let tools: [(tag: Int, key: String, icon: String, page: Page)] = [
-        (10, "Side_Health", "waveform.path.ecg", .health),
-        (11, "Side_Remote", "appletvremote.gen4", .remote),
-        (12, "Side_Install", "square.and.arrow.down", .install),
-        (13, "Side_Restore", "arrow.uturn.backward", .restore),
+        (10, "Side_Info", "info.circle", .info),
+        (11, "Side_Health", "waveform.path.ecg", .health),
+        (12, "Side_Privacy", "hand.raised", .privacy),
+        (13, "Side_Apps", "square.grid.2x2", .apps),
+        (14, "Side_Remote", "appletvremote.gen4", .remote),
+        (15, "Side_Install", "square.and.arrow.down", .install),
+        (16, "Side_Restore", "arrow.uturn.backward", .restore),
     ]
 
     /// Steps are tagged 0-3, tools 10 and up.
@@ -129,7 +135,10 @@ extension Sidebar {
             set: { tag in
                 guard let tag else { return }
                 switch Self.tools.first(where: { $0.tag == tag })?.page {
+                case .info: model.goInfo()
                 case .health: model.goHealth()
+                case .privacy: model.goPrivacy()
+                case .apps: model.goApps()
                 case .remote: model.goRemote()
                 case .install: model.goInstall()
                 case .restore: model.goRestore()

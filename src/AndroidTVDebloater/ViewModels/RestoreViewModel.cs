@@ -10,7 +10,8 @@ public sealed partial class BackupItem(Backup backup) : ObservableObject
 {
     public Backup Backup { get; } = backup;
     public string When => Backup.CreatedText;
-    public string Summary => Loc.Format("Restore_Summary", Backup.DisabledPackages.Count, Backup.Settings.Count + (Backup.WifiWasOn == true ? 1 : 0));
+    public string Summary => Loc.Format(Backup.RevokedPermissions.Count > 0 ? "Restore_SummaryAccess" : "Restore_Summary",
+        Backup.DisabledPackages.Count, Backup.Settings.Count + (Backup.WifiWasOn == true ? 1 : 0), Backup.RevokedPermissions.Count);
     public void Refresh() => OnPropertyChanged(nameof(Summary));
 }
 
@@ -50,7 +51,7 @@ public sealed partial class RestoreViewModel : PageViewModel
         HomeScreen.RefreshTexts();
     }
 
-    /// <summary>Undo one run: re-enable its apps and put every setting back as it was.</summary>
+    /// <summary>Undo one run: re-enable its apps, put every setting back as it was, and give back removed accesses.</summary>
     [RelayCommand]
     private async Task RestoreAsync(BackupItem item)
     {
@@ -67,6 +68,8 @@ public sealed partial class RestoreViewModel : PageViewModel
                 await adb.ShellAsync(serial, "svc wifi enable");
             foreach (var pkg in b.EnabledPackages)
                 await adb.ShellAsync(serial, $"pm disable-user --user 0 {pkg}");
+            foreach (var p in b.RevokedPermissions)
+                await adb.ShellAsync(serial, $"pm grant --user 0 {p.Package} {p.Permission}");
 
             // Keep the file for reference, but stop offering it.
             File.Move(b.FilePath, b.FilePath.Replace("changes-", "restored-"), true);

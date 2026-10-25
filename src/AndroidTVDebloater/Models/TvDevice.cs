@@ -62,9 +62,12 @@ public sealed class TvDevice
     /// <summary>Packages that must never be disabled, whatever the catalog says.</summary>
     public bool IsProtected(string pkg) =>
         pkg == HomePackage || HomeCapable.Contains(pkg) || pkg == InputMethodPackage || ProtectedPackages.Contains(pkg) ||
-        (IsFireTv && FireProtectedPrefixes.Any(pkg.StartsWith));
+        (IsFireTv && FireProtectedPrefixes.Any(pkg.StartsWith) && !Catalog.IsListed(pkg));
 
-    /// <summary>Fire OS answers "Cannot disable a protected package" for Amazon's apps.</summary>
+    /// <summary>
+    /// Fire OS answers "Cannot disable a protected package" for many of Amazon's apps, and others hold the
+    /// TV together: only the Amazon apps the catalog lists, tested on Fire TV, are offered.
+    /// </summary>
     private static readonly string[] FireProtectedPrefixes = ["com.amazon.", "amazon.", "android.amazon.", "com.fireos.", "com.ivona."];
 
     private static readonly HashSet<string> ProtectedPackages =

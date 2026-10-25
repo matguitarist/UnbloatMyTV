@@ -19,6 +19,9 @@
     <DataTemplate DataType="vm:HealthViewModel"><v:HealthView /></DataTemplate>
     <DataTemplate DataType="vm:InstallViewModel"><v:InstallView /></DataTemplate>
     <DataTemplate DataType="vm:RemoteViewModel"><v:RemoteView /></DataTemplate>
+    <DataTemplate DataType="vm:TvInfoViewModel"><v:TvInfoView /></DataTemplate>
+    <DataTemplate DataType="vm:PrivacyViewModel"><v:PrivacyView /></DataTemplate>
+    <DataTemplate DataType="vm:AppsViewModel"><v:AppsView /></DataTemplate>
   </Window.DataTemplates>
 
   <Window.Styles>
@@ -138,10 +141,28 @@
           </Border>
 
           <StackPanel Spacing="10" IsVisible="{Binding HasDevice}">
+            <Button Classes="link tool" Classes.current="{Binding OnInfo}" Command="{Binding GoInfoCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <Path Data="M12 3 A9 9 0 1 1 11.99 3 Z M12 11 V16.5 M12 7.5 V7.6" />
+                <TextBlock Text="{l:T Side_Info}" />
+              </StackPanel>
+            </Button>
             <Button Classes="link tool" Classes.current="{Binding OnHealth}" Command="{Binding GoHealthCommand}">
               <StackPanel Orientation="Horizontal" Spacing="9">
                 <Path Data="M3 12 H7 L10 5 L14 19 L17 12 H21" />
                 <TextBlock Text="{l:T Side_Health}" />
+              </StackPanel>
+            </Button>
+            <Button Classes="link tool" Classes.current="{Binding OnPrivacy}" Command="{Binding GoPrivacyCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <Path Data="M12 3 L19 6 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V6 Z" />
+                <TextBlock Text="{l:T Side_Privacy}" />
+              </StackPanel>
+            </Button>
+            <Button Classes="link tool" Classes.current="{Binding OnApps}" Command="{Binding GoAppsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <Path Data="M4 4 H10 V10 H4 Z M14 4 H20 V10 H14 Z M4 14 H10 V20 H4 Z M14 14 H20 V20 H14 Z" />
+                <TextBlock Text="{l:T Side_Apps}" />
               </StackPanel>
             </Button>
             <Button Classes="link tool" Classes.current="{Binding OnRemote}" Command="{Binding GoRemoteCommand}">

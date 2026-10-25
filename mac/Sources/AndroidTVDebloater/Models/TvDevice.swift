@@ -52,12 +52,13 @@ struct TvDevice: Sendable {
     }
 
     /// Packages that must never be disabled, whatever the catalog says.
-    func isProtected(_ pkg: String) -> Bool {
+    @MainActor func isProtected(_ pkg: String) -> Bool {
         pkg == homePackage || homeCapable.contains(pkg) || pkg == inputMethodPackage || Self.protectedPackages.contains(pkg)
-            || (isFireTv && Self.fireProtectedPrefixes.contains { pkg.hasPrefix($0) })
+            || (isFireTv && Self.fireProtectedPrefixes.contains { pkg.hasPrefix($0) } && !Catalog.isListed(pkg))
     }
 
-    /// Fire OS answers "Cannot disable a protected package" for Amazon's apps.
+    /// Fire OS answers "Cannot disable a protected package" for many of Amazon's apps, and others hold the
+    /// TV together: only the Amazon apps the catalog lists, tested on Fire TV, are offered.
     static let fireProtectedPrefixes = ["com.amazon.", "amazon.", "android.amazon.", "com.fireos.", "com.ivona."]
 
     static let protectedPackages: Set<String> = [
