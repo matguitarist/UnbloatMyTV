@@ -45,6 +45,8 @@ import androidx.compose.runtime.key
 import io.github.matguitarist.unbloatmytv.update.Updater
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
@@ -58,6 +60,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
@@ -131,32 +134,56 @@ private fun App(vm: AppViewModel = viewModel()) {
             else -> if (!vm.isBusy) vm.goChoose()
         }
     }
-    ModalNavigationDrawer(
-        drawerState = drawer,
-        gesturesEnabled = drawer.isOpen || !vm.isBusy,
-        drawerContent = { Drawer(vm) { scope.launch { drawer.close() } } },
-    ) {
-        UpdateDialogs(vm)
-        // A surface, so text outside the cards also gets the theme's colour.
-        Surface(Modifier.fillMaxSize(), color = AppTheme.colors.bg, contentColor = AppTheme.colors.text) {
-            Column(Modifier.fillMaxSize().statusBarsPadding()) {
-                Header(vm) { scope.launch { drawer.open() } }
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-                    // Tablets and TVs: keep lines readable.
-                    Box(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
-                        when (screen) {
-                            Screen.Welcome -> WelcomeScreen(vm)
-                            Screen.Connect -> ConnectScreen(vm)
-                            Screen.Choose -> ChooseScreen(vm)
-                            Screen.Apply -> ApplyScreen(vm)
-                            Screen.Restore -> RestoreScreen(vm)
-                            Screen.Info -> vm.infoModel?.let { InfoScreen(it) }
-                            Screen.Health -> vm.healthModel?.let { HealthScreen(it, vm) }
-                            Screen.Privacy -> vm.privacyModel?.let { PrivacyScreen(it) }
-                            Screen.Apps -> vm.appsModel?.let { AppsScreen(it) }
-                            Screen.Remote -> vm.remoteModel?.let { RemoteScreen(it) }
-                            Screen.Install -> vm.installModel?.let { InstallScreen(it) }
-                        }
+    // Tablets (and big foldables, opened): the menu stays open beside the page. Phones, even
+    // turned sideways, keep it behind the ☰ button.
+    val cfg = LocalConfiguration.current
+    val wide = cfg.screenWidthDp >= 800 && cfg.screenHeightDp >= 480
+    UpdateDialogs(vm)
+    if (wide) {
+        Row(Modifier.fillMaxSize().background(AppTheme.colors.bg)) {
+            PermanentDrawerSheet(Modifier.width(300.dp), drawerContainerColor = AppTheme.colors.bg, drawerContentColor = AppTheme.colors.text) {
+                DrawerContent(vm) {}
+            }
+            VerticalDivider(color = AppTheme.colors.divider)
+            Box(Modifier.weight(1f)) { Page(vm, openMenu = null) }
+        }
+    } else {
+        ModalNavigationDrawer(
+            drawerState = drawer,
+            gesturesEnabled = drawer.isOpen || !vm.isBusy,
+            drawerContent = {
+                ModalDrawerSheet(drawerContainerColor = AppTheme.colors.bg, drawerContentColor = AppTheme.colors.text) {
+                    DrawerContent(vm) { scope.launch { drawer.close() } }
+                }
+            },
+        ) {
+            Page(vm) { scope.launch { drawer.open() } }
+        }
+    }
+}
+
+/** The header and the current page. [openMenu] is null when the menu is always showing. */
+@Composable
+private fun Page(vm: AppViewModel, openMenu: (() -> Unit)?) {
+    // A surface, so text outside the cards also gets the theme's colour.
+    Surface(Modifier.fillMaxSize(), color = AppTheme.colors.bg, contentColor = AppTheme.colors.text) {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            Header(vm, openMenu)
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                // Tablets and TVs: keep lines readable.
+                Box(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
+                    when (vm.screen) {
+                        Screen.Welcome -> WelcomeScreen(vm)
+                        Screen.Connect -> ConnectScreen(vm)
+                        Screen.Choose -> ChooseScreen(vm)
+                        Screen.Apply -> ApplyScreen(vm)
+                        Screen.Restore -> RestoreScreen(vm)
+                        Screen.Info -> vm.infoModel?.let { InfoScreen(it) }
+                        Screen.Health -> vm.healthModel?.let { HealthScreen(it, vm) }
+                        Screen.Privacy -> vm.privacyModel?.let { PrivacyScreen(it) }
+                        Screen.Apps -> vm.appsModel?.let { AppsScreen(it) }
+                        Screen.Remote -> vm.remoteModel?.let { RemoteScreen(it) }
+                        Screen.Install -> vm.installModel?.let { InstallScreen(it) }
                     }
                 }
             }
@@ -173,8 +200,15 @@ private fun stepIndex(vm: AppViewModel): Int = when (vm.screen) {
 }
 
 @Composable
-private fun Header(vm: AppViewModel, openMenu: () -> Unit) {
+private fun Header(vm: AppViewModel, openMenu: (() -> Unit)?) {
     val dev = vm.device
+    if (openMenu == null) {
+        // The menu beside the page already shows the logo and the TV: only the steps here.
+        if (!vm.screen.isTool) Box(Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 18.dp, bottom = 10.dp)) {
+            StepsBar(stepIndex(vm))
+        }
+        return
+    }
     Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 6.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = openMenu, enabled = !vm.isBusy) { Icon(Icons.Outlined.Menu, stringResource(R.string.Android_Menu)) }
@@ -195,77 +229,77 @@ private fun Header(vm: AppViewModel, openMenu: () -> Unit) {
 }
 
 @Composable
-private fun Drawer(vm: AppViewModel, close: () -> Unit) {
+private fun DrawerContent(vm: AppViewModel, close: () -> Unit) {
     val c = AppTheme.colors
     val dev = vm.device
     val connected = vm.tv != null && dev != null
     val current = stepIndex(vm)
+    // Always showing on tablets: nothing leaves a page while the TV is being changed.
+    val free = !vm.isBusy
     fun go(action: () -> Unit) { close(); action() }
 
-    ModalDrawerSheet(drawerContainerColor = c.bg, drawerContentColor = c.text) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 16.dp)) {
-            Row(Modifier.padding(start = 8.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Logo(32.dp)
-                Spacer(Modifier.width(10.dp))
-                Text(stringResource(R.string.App_Name), style = MaterialTheme.typography.titleMedium)
-            }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 16.dp)) {
+        Row(Modifier.padding(start = 8.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Logo(32.dp)
+            Spacer(Modifier.width(10.dp))
+            Text(stringResource(R.string.App_Name), style = MaterialTheme.typography.titleMedium)
+        }
 
-            DrawerLabel(stringResource(R.string.Android_Steps))
-            val steps = listOf(R.string.Step_Prepare, R.string.Step_Connect, R.string.Step_Choose, R.string.Step_Apply)
-            steps.forEachIndexed { i, label ->
-                val enabled = when (i) {
-                    0, 1 -> true
-                    2 -> connected
-                    else -> vm.steps.isNotEmpty()
+        DrawerLabel(stringResource(R.string.Android_Steps))
+        val steps = listOf(R.string.Step_Prepare, R.string.Step_Connect, R.string.Step_Choose, R.string.Step_Apply)
+        steps.forEachIndexed { i, label ->
+            val enabled = when (i) {
+                0, 1 -> true
+                2 -> connected
+                else -> vm.steps.isNotEmpty()
+            }
+            val selected = !vm.screen.isTool && i == minOf(current, 3)
+            DrawerItem(stringResource(label), selected, enabled && (free || selected), icon = {
+                val done = i < current
+                Box(Modifier.size(24.dp).clip(CircleShape).background(if (done) c.okBg else c.idle), contentAlignment = Alignment.Center) {
+                    Text(if (done) "✓" else "${i + 1}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (done) c.okFg else c.muted)
                 }
-                val selected = !vm.screen.isTool && i == minOf(current, 3)
-                DrawerItem(stringResource(label), selected, enabled, icon = {
-                    val done = i < current
-                    Box(Modifier.size(24.dp).clip(CircleShape).background(if (done) c.okBg else c.idle), contentAlignment = Alignment.Center) {
-                        Text(if (done) "✓" else "${i + 1}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (done) c.okFg else c.muted)
-                    }
-                }) {
-                    go {
-                        when (i) {
-                            0 -> vm.go(Screen.Welcome)
-                            1 -> vm.go(Screen.Connect)
-                            2 -> vm.goChoose()
-                            else -> vm.go(Screen.Apply)
-                        }
+            }) {
+                go {
+                    when (i) {
+                        0 -> vm.go(Screen.Welcome)
+                        1 -> vm.go(Screen.Connect)
+                        2 -> vm.goChoose()
+                        else -> vm.go(Screen.Apply)
                     }
                 }
             }
+        }
 
+        Spacer(Modifier.height(16.dp))
+        DrawerLabel(stringResource(R.string.Android_Tools))
+        if (!connected) Muted(stringResource(R.string.Android_ConnectFirst), Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+        TOOLS.forEach { (screen, label, icon) ->
+            DrawerItem(stringResource(label), vm.screen == screen, connected && free, icon = { Icon(icon, null) }) { go { vm.openTool(screen) } }
+        }
+
+        if (connected) {
             Spacer(Modifier.height(16.dp))
-            DrawerLabel(stringResource(R.string.Android_Tools))
-            if (!connected) Muted(stringResource(R.string.Android_ConnectFirst), Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
-            TOOLS.forEach { (screen, label, icon) ->
-                DrawerItem(stringResource(label), vm.screen == screen, connected, icon = { Icon(icon, null) }) { go { vm.openTool(screen) } }
-            }
-
-            if (connected) {
-                Spacer(Modifier.height(16.dp))
-                Surface(shape = MaterialTheme.shapes.medium, color = c.accentSoft, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(stringResource(R.string.Side_Connected), style = MaterialTheme.typography.labelSmall, color = c.muted)
-                        Text(dev!!.displayName, style = MaterialTheme.typography.titleSmall)
-                        Text(dev.host, style = MaterialTheme.typography.bodySmall, color = c.muted)
-                        TextButton(onClick = { go(vm::disconnect) }, contentPadding = PaddingValues(0.dp)) {
-                            Text(stringResource(R.string.Android_Disconnect))
-                        }
+            Surface(shape = MaterialTheme.shapes.medium, color = c.accentSoft, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp)) {
+                    Text(stringResource(R.string.Side_Connected), style = MaterialTheme.typography.labelSmall, color = c.muted)
+                    Text(dev!!.displayName, style = MaterialTheme.typography.titleSmall)
+                    Text(dev.host, style = MaterialTheme.typography.bodySmall, color = c.muted)
+                    TextButton(onClick = { go(vm::disconnect) }, enabled = free, contentPadding = PaddingValues(0.dp)) {
+                        Text(stringResource(R.string.Android_Disconnect))
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
-            val u = vm.update
-            if (u != null) {
-                DrawerItem(stringResource(R.string.Side_UpdateAvailable, u.version), selected = true, enabled = true,
-                    icon = { Icon(Icons.Outlined.SystemUpdate, null) }) { go { vm.updateDialog = AppViewModel.UpdateDialog.Available } }
-            }
-            Row(Modifier.fillMaxWidth().padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("v" + appVersion(), style = MaterialTheme.typography.bodySmall, color = c.faint, modifier = Modifier.weight(1f))
-                if (u == null) TextButton(onClick = { go(vm::checkForUpdates) }) { Text(stringResource(R.string.Side_CheckUpdates)) }
-            }
+        }
+        Spacer(Modifier.height(12.dp))
+        val u = vm.update
+        if (u != null) {
+            DrawerItem(stringResource(R.string.Side_UpdateAvailable, u.version), selected = true, enabled = true,
+                icon = { Icon(Icons.Outlined.SystemUpdate, null) }) { go { vm.updateDialog = AppViewModel.UpdateDialog.Available } }
+        }
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("v" + appVersion(), style = MaterialTheme.typography.bodySmall, color = c.faint, modifier = Modifier.weight(1f))
+            if (u == null) TextButton(onClick = { go(vm::checkForUpdates) }) { Text(stringResource(R.string.Side_CheckUpdates)) }
         }
     }
 }
