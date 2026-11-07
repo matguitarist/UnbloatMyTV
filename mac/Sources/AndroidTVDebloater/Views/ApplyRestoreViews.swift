@@ -156,7 +156,7 @@ struct HomeScreenCard: View {
                     }
                 }
                 .padding(8)
-                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: Radius.control))
             }
             if home.isBusy { ProgressView().progressViewStyle(.linear) }
             if !home.status.isEmpty { Note(text: home.status) }
@@ -199,7 +199,7 @@ struct RestoreView: View {
                             Button(L("Restore_Undo")) { Task { await restore.restore(b) } }
                         }
                         .padding(8)
-                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: Radius.control))
                     }
                 }
             }
