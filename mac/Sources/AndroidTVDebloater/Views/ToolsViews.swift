@@ -88,8 +88,8 @@ struct InstallView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(36)
-            .background(targeted ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 5]))
+            .background(targeted ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: Radius.card))
+            .overlay(RoundedRectangle(cornerRadius: Radius.card).strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 5]))
                 .foregroundStyle(targeted ? Color.accentColor : Color.secondary.opacity(0.5)))
             .dropDestination(for: URL.self) { urls, _ in
                 guard let url = urls.first else { return false }
@@ -117,7 +117,7 @@ struct RemoteView: View {
                 Text(L("Remote_Title")).font(.largeTitle.weight(.semibold))
                 Text(L("Remote_Lead")).font(.title3).foregroundStyle(.secondary)
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(.black)
+                    RoundedRectangle(cornerRadius: Radius.screen).fill(.black)
                     if let img = remote.screen {
                         Image(nsImage: img).resizable().aspectRatio(contentMode: .fit)
                     } else {
@@ -125,7 +125,7 @@ struct RemoteView: View {
                     }
                 }
                 .aspectRatio(16 / 9, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.screen))
                 HStack(spacing: 14) {
                     Toggle(L("Remote_Live"), isOn: $remote.isLive).toggleStyle(.checkbox)
                     if !remote.isLive { Button(L("Health_Refresh")) { Task { await remote.refreshOnce() } } }

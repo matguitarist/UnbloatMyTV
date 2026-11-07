@@ -155,6 +155,6 @@ struct ConnectView: View {
             Button(L("Connect_ConnectThis")) { connect.connect(to: tv.address) }
         }
         .padding(8)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: Radius.control))
     }
 }

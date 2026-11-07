@@ -100,7 +100,7 @@ struct Sidebar: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.control))
                 }
                 Divider()
                 HStack {
@@ -220,6 +220,6 @@ struct Note: View {
             icon: { Image(systemName: icon).foregroundStyle(color) }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+            .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.banner))
     }
 }
